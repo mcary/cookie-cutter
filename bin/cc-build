@@ -1,0 +1,50 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  "--help"|"-h"|"")
+    echo "Usage: $0 output-image-name spec-file source-dir" >&2
+    exit 1
+    ;;
+esac
+
+name="$1"
+spec="$2"
+source="$3"
+
+build_dir="/var/cookie-cutter/containers/build.$$"
+image_base="/var/cookie-cutter/images/$name"
+
+trap "echo Cleaning up... >&2; rm -rf $build_dir $image_base.$$" \
+  INT TERM HUP EXIT
+
+set -x
+
+while read cmd arg1 arg2 rest; do
+  case "$cmd" in
+    FROM)
+      from_name="$arg1"
+      cp -a "/var/cookie-cutter/images/$from_name" "$build_dir"
+      ;;
+    COPY)
+      cp -r "$source/$arg1" "$build_dir/$arg2"
+      ;;
+    RUN)
+      my_dir="`dirname $0`"
+      echo arg1="$arg1"
+      echo arg2="$arg2"
+      echo rest="$rest"
+      "$my_dir"/cc-run "build.$$" sh -c "$arg1 $arg2 $rest"
+      ;;
+    "")
+      # skip blank line
+      ;;
+    *)
+      echo "Unknown command: '$cmd'" >&2
+  esac
+done < "$spec"
+
+cp -a "$build_dir" "$image_base.$$"
+rm -rf "$image_base"
+mv "$image_base.$$" "$image_base"

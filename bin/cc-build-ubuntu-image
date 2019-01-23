@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  "--help"|"-h"|"")
+    echo "Usage: $0 version_name" >&2
+    exit 1
+    ;;
+esac
+
+version_name="$1"
+build_dir="/var/cookie-cutter/containers/build.$$"
+image_base="/var/cookie-cutter/images/$version_name"
+
+trap "echo Cleaning up... >&2; rm -rf $build_dir $image_base.$$" \
+  INT TERM HUP EXIT
+
+set -x
+
+debootstrap --variant=buildd --arch i386 \
+  "$version_name" "$build_dir" \
+  http://us.archive.ubuntu.com/ubuntu/
+
+echo "$version_name" > "$build_dir"/etc/debian_chroot
+
+cp -a "$build_dir" "$image_base.$$"
+rm -rf "$image_base"
+mv "$image_base.$$" "$image_base"

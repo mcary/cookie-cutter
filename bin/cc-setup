@@ -1,0 +1,3 @@
+#!/bin/sh
+
+mkdir /var/cookie-cutter /var/cookie-cutter/images /var/cookie-cutter/containers
