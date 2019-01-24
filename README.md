@@ -69,3 +69,12 @@ Currently all these commands require root privileges.  Run them with
   on it to contain untrusted code.  For example, do not run apps of
   different clients on the same VM.  Also, chroot jails provide almost no
   protection for applications running as root.
+
+## Developing
+
+* Install Vagrant
+* Run `tests/run`
+
+Some slow stages (cc-setup, cc-build-ubuntu-image) will be skipped on
+subsequent runs until you run `vagrant
+destroy`.
