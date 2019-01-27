@@ -37,6 +37,9 @@ while read cmd arg1 arg2 rest; do
       echo rest="$rest"
       "$my_dir"/cc-run "build.$$" sh -c "$arg1 $arg2 $rest"
       ;;
+    "#")
+      # skip comment line, provided there is a space after the "#"
+      ;;
     "")
       # skip blank line
       ;;

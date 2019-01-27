@@ -1,5 +1,6 @@
 FROM xenial
 
+# This is a comment.
 RUN apt-get update
 RUN apt-get install -y rubygems-integration
 COPY . /srv/my-app
