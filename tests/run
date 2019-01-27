@@ -22,7 +22,7 @@ time vagrant ssh -- '
       exit 1
     fi
   }
-  expect_file "$container_dir/test-passed"
-  expect_file "$container_dir/srv/my-app/example-script.sh"
+  expect_file "$container_dir/filesystem/test-passed"
+  expect_file "$container_dir/filesystem/srv/my-app/example-script.sh"
   echo "TESTS PASSED."
 ' || { echo "TESTS FAILED!" >&2; exit 1; }

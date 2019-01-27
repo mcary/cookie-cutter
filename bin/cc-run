@@ -14,4 +14,4 @@ container="/var/cookie-cutter/containers/$container_name"
 shift 1
 
 default_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-chroot "$container" env -i PATH="$default_path" "$@"
+chroot "$container/filesystem" env -i PATH="$default_path" "$@"

@@ -28,7 +28,7 @@ while read cmd arg1 arg2 rest; do
       cp -a "/var/cookie-cutter/images/$from_name" "$build_dir"
       ;;
     COPY)
-      cp -r "$source/$arg1" "$build_dir/$arg2"
+      cp -r "$source/$arg1" "$build_dir/filesystem/$arg2"
       ;;
     RUN)
       my_dir="`dirname $0`"

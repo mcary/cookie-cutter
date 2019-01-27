@@ -22,7 +22,7 @@ shift 2
   trap "echo Cleaning up... >&2; rm -rf '$container.$$'" \
     INT TERM HUP EXIT
   cp -a "$image" "$container.$$"
-  echo "$container_name" > "$container.$$"/etc/debian_chroot
+  echo "$container_name" > "$container.$$"/filesystem/etc/debian_chroot
   mv "$container.$$" "$container"
 ) 
 

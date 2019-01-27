@@ -19,10 +19,10 @@ trap "echo Cleaning up... >&2; rm -rf $build_dir $image_base.$$" \
 set -x
 
 debootstrap --variant=buildd --arch i386 \
-  "$version_name" "$build_dir" \
+  "$version_name" "$build_dir/filesystem" \
   http://us.archive.ubuntu.com/ubuntu/
 
-echo "$version_name" > "$build_dir"/etc/debian_chroot
+echo "$version_name" > "$build_dir/filesystem"/etc/debian_chroot
 
 cp -a "$build_dir" "$image_base.$$"
 rm -rf "$image_base"
