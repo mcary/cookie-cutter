@@ -9,6 +9,11 @@ case "$1" in
     ;;
 esac
 
+if [ -z "$2" ]; then
+  echo "Missing command to run." >&2
+  exit 1
+fi
+
 container_name="$1"
 container="/var/cookie-cutter/containers/$container_name"
 shift 1
