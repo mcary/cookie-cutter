@@ -12,18 +12,35 @@ esac
 version_name="$1"
 build_dir="/var/cookie-cutter/containers/build.$$"
 image_base="/var/cookie-cutter/images/$version_name"
+parent_image_name="empty"
 
-trap "echo Cleaning up... >&2; rm -rf $build_dir $image_base.$$" \
-  INT TERM HUP EXIT
+my_dir="`dirname $0`"
+# Warning: this seems to run twice on interrupt, once for INT and once
+# for EXIT.  So ensure these are idempotent.
+trap "
+  echo Cleaning up... >&2
+  '$my_dir'/cc-umount 'build.$$'
+  rm -rf '$build_dir' '$image_base.$$'
+" INT TERM HUP EXIT
 
 set -x
+
+"$my_dir"/cc-create "build.$$" "$parent_image_name"
 
 debootstrap --variant=buildd --arch i386 \
   "$version_name" "$build_dir/filesystem" \
   http://us.archive.ubuntu.com/ubuntu/
+#debootstrap --variant=minbase --arch i386 \
+#  "$version_name" "$build_dir/filesystem" \
+#  http://us.archive.ubuntu.com/ubuntu/
 
 echo "$version_name" > "$build_dir/filesystem"/etc/debian_chroot
 
-cp -a "$build_dir" "$image_base.$$"
+umount "$build_dir/filesystem"
+
+mkdir "$image_base.$$"
+mv "$build_dir/diff" "$image_base.$$/diff"
+mv "$build_dir/from" "$image_base.$$/from"
+
 rm -rf "$image_base"
 mv "$image_base.$$" "$image_base"

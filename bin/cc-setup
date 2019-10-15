@@ -5,4 +5,11 @@ set -xe
 apt-get update -qq
 apt-get install -y debootstrap
 
-mkdir /var/cookie-cutter /var/cookie-cutter/images /var/cookie-cutter/containers
+mkdir /var/cookie-cutter
+(
+  cd /var/cookie-cutter/
+  mkdir images containers
+  # Create a degenerate base-case initial layer upon which to build all other
+  # things.
+  mkdir images/empty images/empty/diff
+)

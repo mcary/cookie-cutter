@@ -19,19 +19,20 @@ image_base="/var/cookie-cutter/images/$name"
 trap "echo Cleaning up... >&2; rm -rf $build_dir $image_base.$$" \
   INT TERM HUP EXIT
 
+my_dir="`dirname $0`"
+
 set -x
 
 while read cmd arg1 arg2 rest; do
   case "$cmd" in
     FROM)
       from_name="$arg1"
-      cp -a "/var/cookie-cutter/images/$from_name" "$build_dir"
+     "$my_dir"/cc-create "build.$$" "$from_name"
       ;;
     COPY)
       cp -r "$source/$arg1" "$build_dir/filesystem/$arg2"
       ;;
     RUN)
-      my_dir="`dirname $0`"
       echo arg1="$arg1"
       echo arg2="$arg2"
       echo rest="$rest"
@@ -48,6 +49,10 @@ while read cmd arg1 arg2 rest; do
   esac
 done < "$spec"
 
-cp -a "$build_dir" "$image_base.$$"
+"$my_dir"/cc-umount "build.$$"
+
+mkdir "$image_base.$$"
+mv "$build_dir/diff" "$image_base.$$/diff"
+mv "$build_dir/from" "$image_base.$$/from"
 rm -rf "$image_base"
 mv "$image_base.$$" "$image_base"
