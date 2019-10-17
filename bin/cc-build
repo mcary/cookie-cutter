@@ -21,8 +21,6 @@ trap "echo Cleaning up... >&2; rm -rf $build_dir $image_base.$$" \
 
 my_dir="`dirname $0`"
 
-set -x
-
 while read cmd arg1 arg2 rest; do
   case "$cmd" in
     FROM)

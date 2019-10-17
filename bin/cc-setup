@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -xe
+set -e
 
 apt-get update -qq
 apt-get install -y debootstrap

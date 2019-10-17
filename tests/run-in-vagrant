@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -xe
+
+(
+  # Work around low default file descriptor limit (256) in OS X.
+  # https://github.com/hashicorp/vagrant/issues/2435#issuecomment-73500032
+  ulimit -n
+  ulimit -n 512
+  vagrant up
+)
+time vagrant ssh -- /vagrant/tests/run

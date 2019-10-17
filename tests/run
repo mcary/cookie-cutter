@@ -1,28 +1,14 @@
 #!/bin/sh
 
-set -xe
+set -e
+cd "$(dirname $0)"
 
-(
-  # Work around low default file descriptor limit (256) in OS X.
-  # https://github.com/hashicorp/vagrant/issues/2435#issuecomment-73500032
-  ulimit -n
-  ulimit -n 512
-  vagrant up
-)
-time vagrant ssh -- '
-  set -e
-  cd /vagrant/tests
-  sudo PATH=/vagrant/bin:$PATH ./example-script.sh
+sudo PATH=/vagrant/bin:$PATH bash -c '
+  . test-lib.sh
 
-  container_dir=/var/cookie-cutter/containers/my-container/
-  expect_file () {
-    file="$1"
-    if ! [ -f "$file" ]; then
-      echo "Missing file: $file" >&2
-      exit 1
-    fi
-  }
-  expect_file "$container_dir/filesystem/test-passed"
-  expect_file "$container_dir/filesystem/srv/my-app/example-script.sh"
-  echo "TESTS PASSED."
-' || { echo "TESTS FAILED!" >&2; exit 1; }
+  for test in cases/*.sh; do
+    . "$test"
+  done
+
+  summarize_tests
+'

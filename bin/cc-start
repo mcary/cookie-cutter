@@ -28,9 +28,8 @@ echo "$container_name" > "$container"/filesystem/etc/debian_chroot
 
 if [ "$remove" = "1" ]; then
   trap "
-    echo Cleaning up... >&2
-    set -x
-    sh -x '$my_dir'/cc-umount '$container_name'
+    #echo Cleaning up... >&2
+    '$my_dir'/cc-umount '$container_name'
     rm -rf '$container'
   " INT TERM HUP EXIT
 fi

@@ -26,7 +26,6 @@ list_layers () {
   fi
 }
 
-set -x
 # Kernels before Linux 4.0 would need "overlayfs" instead of
 # "overlay" and can only support one lowerdir.
 mount -t overlay \

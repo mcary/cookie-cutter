@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -xe
+set -e
 
 # Don't build it if it's left over from before to save time.
 # Use "vagrant destroy" or rm -rf /var/cookie-cutter to reset.

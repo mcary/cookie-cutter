@@ -73,7 +73,7 @@ Currently all these commands require root privileges.  Run them with
 ## Developing
 
 * Install Vagrant
-* Run `tests/run`
+* Run `tests/run-in-vagrant`
 
 Some slow stages (cc-setup, cc-build-ubuntu-image) will be skipped on
 subsequent runs until you run `vagrant

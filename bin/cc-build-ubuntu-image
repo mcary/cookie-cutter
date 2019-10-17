@@ -23,8 +23,6 @@ trap "
   rm -rf '$build_dir' '$image_base.$$'
 " INT TERM HUP EXIT
 
-set -x
-
 "$my_dir"/cc-create "build.$$" "$parent_image_name"
 
 debootstrap --variant=buildd --arch i386 \
