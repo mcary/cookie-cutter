@@ -9,9 +9,9 @@ As root:
 ```
 # cc-setup
 # cc-build-ubuntu-image xenial
-# cc-build my-image xenial my-app.ccspec
+# cc-build my-image my-app.ccspec build-context/
 # cc-start my-container my-image echo hello world
-# cc-run my-container my-image bash -l
+# cc-run my-container bash -l
 ```
 
 my-app.ccspec:
