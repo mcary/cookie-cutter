@@ -1,3 +1,12 @@
+clean_old_tmp_containers () {
+  rm -rf /var/cookie-cutter/containers/tmp.*
+}
+
+expect_no_tmp_containers () {
+  expect_equal "$(ls /var/cookie-cutter/containers/ | grep -c '^tmp\.*')" "0" \
+    "Count of tmp.* containers"
+}
+
 test_description "'cc-start --rm' runs command"
 
 expect_success "cc-start --rm xenial echo 'Hello World' > tmp.out"
@@ -20,20 +29,19 @@ test_done
 
 test_description "'cc-start --rm' removes container on success"
 
-rm -rf /var/cookie-cutter/containers/tmp.*
+clean_old_tmp_containers
 
 expect_success "cc-start --rm xenial true"
-expect_equal "$(ls /var/cookie-cutter/containers/ | grep -c '^tmp\.*')" "0" \
-  "Count of tmp.* containers"
+expect_no_tmp_containers
 
 test_done
 
 
 test_description "'cc-start --rm' removes container on failure"
 
-rm -rf /var/cookie-cutter/containers/tmp.*
+clean_old_tmp_containers
 
-expect_success "! cc-start --rm xenial false"
+expect_failure "cc-start --rm xenial false"
 expect_equal "$(ls /var/cookie-cutter/containers/ | grep -c '^tmp\.*')" "0" \
   "Count of tmp.* containers"
 
@@ -42,11 +50,10 @@ test_done
 
 test_description "'cc-start --rm' removes container on missing image"
 
-rm -rf /var/cookie-cutter/containers/tmp.*
+clean_old_tmp_containers
 
-expect_success "! cc-start --rm non-existent-image true 2> tmp.err"
-expect_equal "$(ls /var/cookie-cutter/containers/ | grep -c '^tmp\.*')" "0" \
-  "Count of tmp.* containers"
+expect_failure "cc-start --rm non-existent-image true 2> tmp.err"
+expect_no_tmp_containers
 expect_equal "$(cat tmp.err)" "Image not found: non-existent-image" "error"
 
 test_done

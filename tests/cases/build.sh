@@ -20,15 +20,19 @@ expect_cleanup_happened () {
       "Count of build.* containers"
 }
 
+perform_build_with_file () {
+  cat > tmp.cc-build
+  expect_success "cc-build '$new_image_name' tmp.cc-build ."
+  rm -f tmp.cc-build
+}
+
 
 test_description "FROM creates an image"
 
 setup
-cat > tmp.cc-build <<-EOF
+perform_build_with_file <<-EOF
 FROM xenial
 EOF
-
-expect_success "cc-build '$new_image_name' tmp.cc-build ."
 
 expect_build_complete
 expect_equal "$(ls "$new_image/diff" | grep -c '.')" "0" "file count of layer"
@@ -42,12 +46,11 @@ test_description "COPY adds file"
 setup
 rm -f a-file-to-add
 echo some-contents > a-file-to-add
-cat > tmp.cc-build <<-EOF
+
+perform_build_with_file <<-EOF
 FROM xenial
 COPY a-file-to-add
 EOF
-
-expect_success "cc-build '$new_image_name' tmp.cc-build ."
 
 expect_build_complete
 expect_equal "$(cat "$new_image/diff/a-file-to-add")" "some-contents" \
@@ -62,12 +65,11 @@ setup
 rm -rf a-dir
 mkdir a-dir
 echo some-contents > a-dir/a-file-to-add
-cat > tmp.cc-build <<-EOF
+
+perform_build_with_file <<-EOF
 FROM xenial
 COPY a-dir
 EOF
-
-expect_success "cc-build '$new_image_name' tmp.cc-build ."
 
 expect_build_complete
 expect_equal "$(cat "$new_image/diff/a-dir/a-file-to-add")" "some-contents" \
@@ -79,17 +81,13 @@ test_done
 test_description "RUN runs command"
 
 setup
-cat > tmp.cc-build <<-EOF
+
+perform_build_with_file <<-EOF
 FROM xenial
 RUN touch the-command-ran
 EOF
-
-expect_success "cc-build '$new_image_name' tmp.cc-build ."
 
 expect_build_complete
 expect_file_exists "$new_image/diff/the-command-ran"
 
 test_done
-
-
-rm -f tmp.cc-build

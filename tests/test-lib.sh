@@ -37,6 +37,19 @@ expect_success () {
   fi
 }
 
+expect_failure () {
+  local code="$1"
+  local expected_status="${2-1}"
+  eval "$code"
+  status=$?
+  if [ "x$status" != "x$expected_status" ]; then
+    fail_check "Command exited with [$status], expected [$expected_status]: "\
+       "$(echo "$code" | sed 's/^/  /')"
+  else
+    pass_check
+  fi
+}
+
 expect_equal () {
   local actual="$1"
   local expected="$2"
