@@ -9,4 +9,4 @@ set -xe
   ulimit -n 512
   vagrant up
 )
-time vagrant ssh -- /vagrant/tests/run
+time vagrant ssh -- /vagrant/tests/run "$@"

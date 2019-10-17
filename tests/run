@@ -6,9 +6,18 @@ cd "$(dirname $0)"
 sudo PATH=/vagrant/bin:$PATH bash -c '
   . test-lib.sh
 
-  for test in cases/*.sh; do
-    . "$test"
-  done
+  run_all () {
+    for test in "$@"; do
+      # Strip "tests/" prefix.
+      . "${test#"tests/"}"
+    done
+  }
+
+  if [ -z "$1" ]; then
+    run_all cases/*.sh
+  else
+    run_all "$@"
+  fi
 
   summarize_tests
-'
+' "$0's bash -c" "$@"
