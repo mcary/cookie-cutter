@@ -23,6 +23,10 @@ echo "$image_name" > "$container/from"
 list_layers () {
   local image_name="$1"
   local image="/var/cookie-cutter/images/$image_name"
+  if ! [ -d "$image" ]; then
+    echo "Image not found: $image_name" >&2
+    return 1
+  fi
   echo -n "$image/diff"
   if [ -f "$image/from" ]; then
     echo -n ":"
@@ -32,8 +36,9 @@ list_layers () {
 
 # Kernels before Linux 4.0 would need "overlayfs" instead of
 # "overlay" and can only support one lowerdir.
+layers="$(list_layers "$image_name")"
 mount -t overlay \
-    -o "lowerdir=$(list_layers "$image_name")" \
+    -o "lowerdir=$layers" \
     -o "upperdir=$container/diff" \
     -o "workdir=$container/work" \
     ignored-by-overlayfs \
