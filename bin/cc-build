@@ -16,7 +16,7 @@ source="$3"
 build_dir="/var/cookie-cutter/containers/build.$$"
 image_base="/var/cookie-cutter/images/$name"
 
-trap "echo Cleaning up... >&2; rm -rf $build_dir $image_base.$$" \
+trap "rm -rf $build_dir $image_base.$$" \
   INT TERM HUP EXIT
 
 my_dir="`dirname $0`"
@@ -31,9 +31,9 @@ while read cmd arg1 arg2 rest; do
       cp -r "$source/$arg1" "$build_dir/filesystem/$arg2"
       ;;
     RUN)
-      echo arg1="$arg1"
-      echo arg2="$arg2"
-      echo rest="$rest"
+      #echo arg1="$arg1"
+      #echo arg2="$arg2"
+      #echo rest="$rest"
       "$my_dir"/cc-run "build.$$" sh -c "$arg1 $arg2 $rest"
       ;;
     "#")
