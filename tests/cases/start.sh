@@ -38,3 +38,14 @@ expect_equal "$(ls /var/cookie-cutter/containers/ | grep -c '^tmp\.*')" "0" \
   "Count of tmp.* containers"
 
 test_done
+
+
+test_description "'cc-start --rm' removes container on missing image"
+
+rm -rf /var/cookie-cutter/containers/tmp.*
+
+expect_success "! cc-start --rm non-existent-image true"
+expect_equal "$(ls /var/cookie-cutter/containers/ | grep -c '^tmp\.*')" "0" \
+  "Count of tmp.* containers"
+
+test_done

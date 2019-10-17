@@ -13,6 +13,10 @@ image_name="$2"
 container_name="$1"
 container="/var/cookie-cutter/containers/$container_name"
 
+trap "
+  rm -rf '$container'
+" INT TERM HUP EXIT
+
 mkdir "$container" "$container/diff" "$container/filesystem" "$container/work"
 echo "$image_name" > "$container/from"
 
@@ -33,4 +37,5 @@ mount -t overlay \
     -o "upperdir=$container/diff" \
     -o "workdir=$container/work" \
     ignored-by-overlayfs \
-    "$container/filesystem"
+    "$container/filesystem" &&
+    trap - INT TERM HUP EXIT
