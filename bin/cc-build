@@ -14,7 +14,6 @@ spec="$2"
 source="$3"
 
 build_dir="/var/cookie-cutter/containers/build.$$"
-image_base="/var/cookie-cutter/images/$name"
 
 my_dir="`dirname $0`"
 trap "
@@ -54,10 +53,4 @@ while read cmd arg1 arg2 rest; do
   esac
 done < "$spec"
 
-"$my_dir"/cc-umount "build.$$"
-
-mkdir "$image_base.$$"
-mv "$build_dir/diff" "$image_base.$$/diff"
-mv "$build_dir/from" "$image_base.$$/from"
-rm -rf "$image_base"
-mv "$image_base.$$" "$image_base"
+"$my_dir"/cc-save "build.$$" "$name"

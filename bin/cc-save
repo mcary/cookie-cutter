@@ -1,0 +1,36 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  "--help"|"-h"|"")
+    echo "Usage: $0 container-name image-name" >&2
+    exit 1
+    ;;
+esac
+
+image_name="$2"
+container_name="$1"
+container="/var/cookie-cutter/containers/$container_name"
+image="/var/cookie-cutter/images/$image_name"
+
+my_dir="`dirname $0`"
+"$my_dir"/cc-umount "$container_name"
+
+#read -n 20 out < /dev/urandom; echo "$out")
+#$(dd if=/dev/urandom bs=20 count=1| shasum -
+#layer_name="$(dd if=/dev/urandom bs=20 count=1 | shasum -
+#layer="/var/cookie-cutter/layers/
+
+trap "
+  rm -rf '$image.$$'
+" INT TERM HUP EXIT
+
+mkdir "$image.$$"
+mv "$container/diff" "$image.$$/diff"
+mv "$container/from" "$image.$$/from"
+
+rm -rf "$image"
+mv "$image.$$" "$image"
+# Leave the container until the image is successfully created (above).
+rm -rf "$container"
