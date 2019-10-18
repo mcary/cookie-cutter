@@ -16,10 +16,13 @@ source="$3"
 build_dir="/var/cookie-cutter/containers/build.$$"
 image_base="/var/cookie-cutter/images/$name"
 
-trap "rm -rf $build_dir $image_base.$$" \
+my_dir="`dirname $0`"
+trap "
+  '$my_dir'/cc-umount 'build.$$'
+  rm -rf $build_dir $image_base.$$
+" \
   INT TERM HUP EXIT
 
-my_dir="`dirname $0`"
 
 while read cmd arg1 arg2 rest; do
   case "$cmd" in
@@ -34,7 +37,11 @@ while read cmd arg1 arg2 rest; do
       #echo arg1="$arg1"
       #echo arg2="$arg2"
       #echo rest="$rest"
-      "$my_dir"/cc-run "build.$$" sh -c "$arg1 $arg2 $rest"
+      command="$arg1 $arg2 $rest"
+      "$my_dir"/cc-run "build.$$" sh -c "$command" || {
+        echo "Error running: $command" >&2
+        exit 1
+      }
       ;;
     "#")
       # skip comment line, provided there is a space after the "#"

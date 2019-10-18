@@ -91,3 +91,20 @@ expect_build_complete
 expect_file_exists "$new_image/diff/the-command-ran"
 
 test_done
+
+
+test_description "RUN command fails"
+
+setup
+
+cat > tmp.cc-build <<-EOF
+FROM xenial
+RUN false
+EOF
+expect_failure "cc-build '$new_image_name' tmp.cc-build . 2> tmp.err"
+rm -f tmp.cc-build
+
+expect_cleanup_happened
+expect_equal "$(cat tmp.err)" "Error running: false  " "error"
+
+test_done
