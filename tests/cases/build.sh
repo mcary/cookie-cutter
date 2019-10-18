@@ -21,8 +21,9 @@ expect_cleanup_happened () {
 }
 
 perform_build_with_file () {
+  local build_context="${1-.}"
   cat > tmp.cc-build
-  expect_success "cc-build '$new_image_name' tmp.cc-build ."
+  expect_success "cc-build '$new_image_name' tmp.cc-build $build_context"
   rm -f tmp.cc-build
 }
 
@@ -74,6 +75,44 @@ EOF
 expect_build_complete
 expect_equal "$(cat "$new_image/diff/a-dir/a-file-to-add")" "some-contents" \
   "contents of a-dir/a-file-to-add"
+
+test_done
+
+
+test_description "COPY relative build context"
+
+setup
+rm -rf a-dir
+mkdir a-dir
+echo some-contents > a-dir/a-file-to-add
+
+perform_build_with_file a-dir <<-EOF
+FROM xenial
+COPY .
+EOF
+
+expect_build_complete
+expect_equal "$(cat "$new_image/diff/a-file-to-add")" "some-contents" \
+  "contents of a-file-to-add"
+
+test_done
+
+
+test_description "COPY relative target"
+
+setup
+rm -f a-file-to-add
+echo some-contents > a-file-to-add
+
+perform_build_with_file <<-EOF
+FROM xenial
+RUN mkdir a-dir/
+COPY a-file-to-add a-dir/
+EOF
+
+expect_build_complete
+expect_equal "$(cat "$new_image/diff/a-dir/a-file-to-add")" "some-contents" \
+  "contents of a-file-to-add"
 
 test_done
 
