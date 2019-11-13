@@ -27,6 +27,12 @@ perform_build_with_file () {
   rm -f tmp.cc-build
 }
 
+attempt_build_with_file () {
+  cat > tmp.cc-build
+  expect_failure "cc-build '$new_image_name' tmp.cc-build . 2> tmp.err"
+  rm -f tmp.cc-build
+}
+
 
 test_description "FROM creates an image"
 
@@ -38,6 +44,21 @@ EOF
 expect_build_complete
 expect_equal "$(ls "$new_image/diff" | grep -c '.')" "0" "file count of layer"
 expect_equal "$(cat "$new_image/from")" "xenial" "'from' image"
+
+test_done
+
+
+test_description "FROM raises error for invalid name"
+
+setup
+attempt_build_with_file <<-EOF
+FROM non-existent-image
+EOF
+
+expect_cleanup_happened
+expect_failure "test -d '$new_image'"
+
+expect_equal "$(cat tmp.err)" "Image not found: non-existent-image" "error"
 
 test_done
 
@@ -136,12 +157,10 @@ test_description "RUN command fails"
 
 setup
 
-cat > tmp.cc-build <<-EOF
+attempt_build_with_file <<-EOF
 FROM xenial
 RUN false
 EOF
-expect_failure "cc-build '$new_image_name' tmp.cc-build . 2> tmp.err"
-rm -f tmp.cc-build
 
 expect_cleanup_happened
 expect_equal "$(cat tmp.err)" "Error running: false  " "error"
