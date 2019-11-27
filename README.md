@@ -3,6 +3,12 @@
 Cookie-Cutter is a toolkit for building and running isolated application
 environments.
 
+## Installing
+
+Install via curl-bash command as described in [install.sh].
+
+[install.sh]:https://github.com/mcary/cookie-cutter/blob/master/install.sh
+
 ## Quick Start
 
 As root:
