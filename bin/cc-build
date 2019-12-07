@@ -7,6 +7,7 @@ case "$1" in
   "--help"|"-h"|"")
     echo "Usage: $0 [options] output-image-name spec-file source-dir" >&2
     echo "  -q|--quiet   Don't print commands as they are executed" >&2
+    echo "  -d|--debug   When a RUN command fails, start a shell to debug" >&2
     exit 1
     ;;
 esac
@@ -18,6 +19,10 @@ while [ -n "$1" ]; do
   case "$1" in
     "--quiet"|"-q")
       quiet=true
+      shift
+      ;;
+    "--debug"|"-d")
+      debug=true
       shift
       ;;
     "-*")
@@ -60,7 +65,7 @@ indent () {
   return "$status"
 }
 
-while read cmd arg1 arg2 rest; do
+while read cmd arg1 arg2 rest <&3; do
 
   if echo "$cmd" | grep -q '^\s*#'; then
     # Skip comment
@@ -92,12 +97,15 @@ while read cmd arg1 arg2 rest; do
       command="$arg1 $arg2 $rest"
       $indent "$my_dir"/cc-run "build.$$" sh -c "$command" || {
         echo "Error running: $command" >&2
+        if [ "x$debug" = "xtrue" ]; then
+          "$my_dir"/cc-run "build.$$" "$SHELL"
+        fi
         exit 1
       }
       ;;
     *)
       echo "Unknown command: '$cmd'" >&2
   esac
-done < "$spec"
+done 3< "$spec"
 
 "$my_dir"/cc-save "build.$$" "$name"

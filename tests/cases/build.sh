@@ -225,3 +225,22 @@ expect_cleanup_happened
 expect_equal "$(cat tmp.err)" "Error running: false  " "error"
 
 test_done
+
+
+test_description "With -d: debugs on error"
+
+echo "echo shell is running" > tmp.shell
+chmod a+x tmp.shell
+
+SHELL="/bin/tmp.shell" attempt_build_with_file "-q -d" <<-EOF
+FROM xenial
+COPY tmp.shell /bin/tmp.shell
+RUN false
+EOF
+
+expect_cleanup_happened
+expect_equal "$(cat tmp.out)" "shell is running" "shell output"
+
+rm tmp.shell
+
+test_done
