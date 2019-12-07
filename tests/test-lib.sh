@@ -43,8 +43,9 @@ expect_failure () {
   eval "$code"
   status=$?
   if [ "x$status" != "x$expected_status" ]; then
-    fail_check "Command exited with [$status], expected [$expected_status]: "\
-       "$(echo "$code" | sed 's/^/  /')"
+    indented="$(echo "$code" | sed 's/^/  /')"
+    msg="Command exited with [$status], expected [$expected_status]: $indented"
+    fail_check "$msg"
   else
     pass_check
   fi
