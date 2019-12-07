@@ -2,12 +2,33 @@
 
 set -e
 
+
 case "$1" in
   "--help"|"-h"|"")
-    echo "Usage: $0 output-image-name spec-file source-dir" >&2
+    echo "Usage: $0 [options] output-image-name spec-file source-dir" >&2
+    echo "  -q|--quiet   Don't print commands as they are executed" >&2
     exit 1
     ;;
 esac
+
+quiet=
+debug=
+
+while [ -n "$1" ]; do
+  case "$1" in
+    "--quiet"|"-q")
+      quiet=true
+      shift
+      ;;
+    "-*")
+      echo "Unknown flag: $1" >&2
+      exit 1
+      ;;
+    *)
+      break; # end of option args
+      ;;
+  esac
+done
 
 name="$1"
 spec="$2"
@@ -22,8 +43,40 @@ trap "
 " \
   INT TERM HUP EXIT
 
+# Indent stderr and stdout separately while preserving exit status.
+indent () {
+  local status_file="tmp.$$.status"
+  {
+    {
+      {
+        "$@"
+        echo $? > "$status_file" # note exit status
+      } | sed 's/^/  /' # filter stdout
+    } 3>&1 1>&2 2>&3 | # swap stderr and stdout
+    sed 's/^/  /' # filter stderr
+  } 3>&1 1>&2 2>&3 # swap stderr and stdout back
+  status="$(cat "$status_file")"
+  rm "$status_file"
+  return "$status"
+}
 
 while read cmd arg1 arg2 rest; do
+
+  if echo "$cmd" | grep -q '^\s*#'; then
+    # Skip comment
+    continue
+  elif echo "$cmd" | grep -q '^$'; then
+    # Show single blank line in ouput.
+    [ "x$quiet" != "xtrue" ] && echo
+    continue
+  fi
+
+  if [ "x$quiet" != "xtrue" ]; then
+    echo
+    echo "$cmd $arg1 $arg2 $rest"
+    indent=indent
+  fi
+
   case "$cmd" in
     FROM)
       from_name="$arg1"
@@ -37,16 +90,10 @@ while read cmd arg1 arg2 rest; do
       #echo arg2="$arg2"
       #echo rest="$rest"
       command="$arg1 $arg2 $rest"
-      "$my_dir"/cc-run "build.$$" sh -c "$command" || {
+      $indent "$my_dir"/cc-run "build.$$" sh -c "$command" || {
         echo "Error running: $command" >&2
         exit 1
       }
-      ;;
-    "#")
-      # skip comment line, provided there is a space after the "#"
-      ;;
-    "")
-      # skip blank line
       ;;
     *)
       echo "Unknown command: '$cmd'" >&2

@@ -18,18 +18,27 @@ expect_cleanup_happened () {
     "Count of tmp.* containers"
   expect_equal "$(ls "$containers" | grep -c '^build\.*')" "0" \
       "Count of build.* containers"
+  expect_equal "$(ls . | grep -c 'tmp\.\d+\.status')" "0" \
+      "Count of tmp.*.status files"
 }
 
 perform_build_with_file () {
   local build_context="${1-.}"
+  local default_opts="-q"
+  local opts="${2-$default_opts}"
+  local redirects="> tmp.out 2> tmp.err"
   cat > tmp.cc-build
-  expect_success "cc-build '$new_image_name' tmp.cc-build $build_context"
+  expect_success \
+    "cc-build $opts '$new_image_name' tmp.cc-build $build_context $redirects"
   rm -f tmp.cc-build
 }
 
 attempt_build_with_file () {
   cat > tmp.cc-build
-  expect_failure "cc-build '$new_image_name' tmp.cc-build . 2> tmp.err"
+  local default_opts="-q"
+  local opts="${1-$default_opts}"
+  local redirects="> tmp.out 2> tmp.err"
+  expect_failure "cc-build $opts '$new_image_name' tmp.cc-build . $redirects"
   rm -f tmp.cc-build
 }
 
@@ -158,6 +167,56 @@ test_description "RUN command fails"
 setup
 
 attempt_build_with_file <<-EOF
+FROM xenial
+RUN false
+EOF
+
+expect_cleanup_happened
+expect_equal "$(cat tmp.err)" "Error running: false  " "error"
+
+test_done
+
+
+test_description "Without -q: indents command stdout"
+
+perform_build_with_file . "" <<-EOF
+FROM xenial
+RUN echo hi
+EOF
+
+expect_cleanup_happened
+expect_equal "$(cat tmp.out)" \
+"
+FROM xenial  
+
+RUN echo hi 
+  hi" "stdout"
+expect_equal "$(cat tmp.err)" "" "stderr"
+
+test_done
+
+
+test_description "Without -q: indents command stderr"
+
+perform_build_with_file . "" <<-EOF
+FROM xenial
+RUN echo hi >&2
+EOF
+
+expect_cleanup_happened
+expect_equal "$(cat tmp.out)" \
+"
+FROM xenial  
+
+RUN echo hi >&2" "stdout"
+expect_equal "$(cat tmp.err)" "  hi" "stderr"
+
+test_done
+
+
+test_description "Without -q: preserves exit code"
+
+attempt_build_with_file "" <<-EOF
 FROM xenial
 RUN false
 EOF
