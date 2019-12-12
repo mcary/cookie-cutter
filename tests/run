@@ -5,6 +5,7 @@ cd "$(dirname $0)"
 
 sudo PATH=/vagrant/bin:$PATH bash -c '
   . test-lib.sh
+  . cc-lib.sh
 
   run_all () {
     for test in "$@"; do
