@@ -4,19 +4,35 @@ set -e
 
 case "$1" in
   "--help"|"-h"|"")
-    echo "Usage: $0 container-name cmd..." >&2
+    echo "Usage: $0 {container-name|--rm} image-name cmd..." >&2
     exit 1
     ;;
 esac
 
-if [ -z "$2" ]; then
-  echo "Missing command to run." >&2
-  exit 1
+image_name="$2"
+image="/var/cookie-cutter/images/$image_name"
+container_name="$1"
+if [ "x$container_name" = "x--rm" ]; then
+  container_name="tmp.$$"
+  remove=1
+fi
+container="/var/cookie-cutter/containers/$container_name"
+shift 2
+
+
+my_dir="`dirname $0`"
+"$my_dir"/cc-create "$container_name" "$image_name"
+
+echo "$container_name" > "$container"/filesystem/etc/debian_chroot
+
+
+if [ "$remove" = "1" ]; then
+  trap "
+    #echo Cleaning up... >&2
+    '$my_dir'/cc-umount '$container_name'
+    rm -rf '$container'
+  " INT TERM HUP EXIT
 fi
 
-container_name="$1"
-container="/var/cookie-cutter/containers/$container_name"
-shift 1
 
-default_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-chroot "$container/filesystem" env -i PATH="$default_path" "$@"
+"$my_dir"/cc-exec "$container_name" "$@"

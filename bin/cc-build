@@ -95,10 +95,10 @@ while read cmd arg1 arg2 rest <&3; do
       #echo arg2="$arg2"
       #echo rest="$rest"
       command="$arg1 $arg2 $rest"
-      $indent "$my_dir"/cc-run "build.$$" sh -c "$command" || {
+      $indent "$my_dir"/cc-exec "build.$$" sh -c "$command" || {
         echo "Error running: $command" >&2
         if [ "x$debug" = "xtrue" ]; then
-          "$my_dir"/cc-run "build.$$" "$SHELL"
+          "$my_dir"/cc-exec "build.$$" "$SHELL"
         fi
         exit 1
       }

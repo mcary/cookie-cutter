@@ -16,8 +16,8 @@ As root:
 # cc-setup
 # cc-build-ubuntu-image xenial
 # cc-build my-image my-app.ccspec build-context/
-# cc-start my-container my-image echo hello world
-# cc-run my-container bash -l
+# cc-run my-container my-image echo hello world
+# cc-exec my-container bash -l
 ```
 
 my-app.ccspec:
@@ -53,11 +53,10 @@ persist and be started and stopped as needed.
 
 * `cc-build` - Build custom images from a Dockerfile-like specification
 * `cc-build-ubuntu-image` - Build standard Ubuntu images from debootstrap
-* `cc-run` - Run a command in an existing container
 * `cc-setup` - Setup the directory structure that will be assumed by
   Cookie-Cutter (run this once to install Cookie-Cutter)
-* `cc-start` - Create a container from an image and then run a command in
-  it
+* `cc-run` - Create a container from an image and then run a command in it
+* `cc-exec` - Run a command in an existing container
 
 Currently all these commands require root privileges.  Run them with
 "--help" for more details.
