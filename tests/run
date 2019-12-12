@@ -9,6 +9,8 @@ sudo PATH=/vagrant/bin:$PATH bash -c '
 
   run_all () {
     for test in "$@"; do
+      echo
+      echo "File: $(basename "$test")"
       # Strip "tests/" prefix.
       . "${test#"tests/"}"
     done
