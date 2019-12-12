@@ -17,7 +17,7 @@ As root:
 # cc-build-ubuntu-image xenial
 # cc-build my-image my-app.ccspec build-context/
 # cc-run my-container my-image echo hello world
-# cc-exec my-container bash -l
+# cc-run --rm my-image bash -l
 ```
 
 my-app.ccspec:

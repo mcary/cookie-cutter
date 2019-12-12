@@ -26,13 +26,16 @@ my_dir="`dirname $0`"
 echo "$container_name" > "$container"/filesystem/etc/debian_chroot
 
 
+cleanup="
+  #echo Cleaning up... >&2
+  '$my_dir'/cc-umount '$container_name'
+"
 if [ "$remove" = "1" ]; then
-  trap "
-    #echo Cleaning up... >&2
-    '$my_dir'/cc-umount '$container_name'
+  cleanup="
+    $cleanup
     rm -rf '$container'
-  " INT TERM HUP EXIT
+  "
 fi
-
+trap "$cleanup" INT TERM HUP EXIT
 
 "$my_dir"/cc-exec "$container_name" "$@"
