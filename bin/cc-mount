@@ -1,0 +1,38 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  "--help"|"-h"|"")
+    echo "Usage: $0 container-name" >&2
+    exit 1
+    ;;
+esac
+
+container_name="$1"
+container="/var/cookie-cutter/containers/$container_name"
+image_name="$(cat "$container/from")"
+
+list_layers () {
+  local image_name="$1"
+  local image="/var/cookie-cutter/images/$image_name"
+  if ! [ -d "$image" ]; then
+    echo "Image not found: $image_name" >&2
+    return 1
+  fi
+  echo -n "$image/diff"
+  if [ -f "$image/from" ]; then
+    echo -n ":"
+    list_layers "$(cat "$image/from")"
+  fi
+}
+
+# Kernels before Linux 4.0 would need "overlayfs" instead of
+# "overlay" and can only support one lowerdir.
+layers="$(list_layers "$image_name")"
+mount -t overlay \
+    -o "lowerdir=$layers" \
+    -o "upperdir=$container/diff" \
+    -o "workdir=$container/work" \
+    ignored-by-overlayfs \
+    "$container/filesystem"
