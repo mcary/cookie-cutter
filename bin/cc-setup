@@ -3,7 +3,8 @@
 set -e
 
 apt-get update -qq
-apt-get install -y debootstrap
+# systemd-container is only needed for cc-boot.
+apt-get install -y debootstrap systemd-container
 
 mkdir /var/cookie-cutter
 (
