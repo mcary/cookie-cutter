@@ -46,7 +46,7 @@ test_description "'cc-boot my-container' leaves container, unmounted"
 
 container_dir="/var/cookie-cutter/containers/my-container"
 cc-umount "my-container" || return
-rm -rf "$container_dir" || return
+rm -rf --one-file-system "$container_dir" || return
 rm -f tmp.out tmp.err
 [ -d some-directory ] || mkdir some-directory
 

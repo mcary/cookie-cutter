@@ -3,8 +3,8 @@ new_image="/var/cookie-cutter/images/$new_image_name"
 
 setup () {
   cc-umount "$new_image_name"
-  rm -rf "$new_image"
-  rm -rf /var/cookie-cutter/containers/tmp.*
+  rm -rf --one-file-system "$new_image"
+  rm -rf --one-file-system /var/cookie-cutter/containers/tmp.*
 }
 
 expect_build_complete () {
@@ -93,7 +93,7 @@ test_done
 test_description "COPY adds directory"
 
 setup
-rm -rf a-dir
+rm -rf --one-file-system a-dir
 mkdir a-dir
 echo some-contents > a-dir/a-file-to-add
 
@@ -112,7 +112,7 @@ test_done
 test_description "COPY relative build context"
 
 setup
-rm -rf a-dir
+rm -rf --one-file-system a-dir
 mkdir a-dir
 echo some-contents > a-dir/a-file-to-add
 

@@ -2,7 +2,7 @@ test_description 'run example-script.sh'
 
 container_dir=/var/cookie-cutter/containers/my-container/
 cc-umount "my-container"
-rm -rf "$container_dir"
+rm -rf --one-file-system "$container_dir"
 
 expect_success 'format_output "sh -x ./example-script.sh"'
 

@@ -44,7 +44,7 @@ build_dir="/var/cookie-cutter/containers/build.$$"
 my_dir="`dirname $0`"
 trap "
   '$my_dir'/cc-umount 'build.$$'
-  rm -rf $build_dir $image_base.$$
+  rm -rf --one-file-system $build_dir $image_base.$$
 " \
   INT TERM HUP EXIT
 

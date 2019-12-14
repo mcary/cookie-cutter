@@ -19,7 +19,7 @@ test_description "'cc-run my-container' leaves container, unmounted"
 
 container_dir="/var/cookie-cutter/containers/my-container"
 cc-umount "my-container" || return
-rm -rf "$container_dir" || return
+rm -rf --one-file-system "$container_dir" || return
 
 expect_success "cc-run my-container xenial true"
 expect_dir_exists "$container_dir"

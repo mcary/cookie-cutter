@@ -23,14 +23,14 @@ my_dir="`dirname $0`"
 #layer="/var/cookie-cutter/layers/
 
 trap "
-  rm -rf '$image.$$'
+  rm -rf --one-file-system '$image.$$'
 " INT TERM HUP EXIT
 
 mkdir "$image.$$"
 mv "$container/diff" "$image.$$/diff"
 mv "$container/from" "$image.$$/from"
 
-rm -rf "$image"
+rm -rf --one-file-system "$image"
 mv "$image.$$" "$image"
 # Leave the container until the image is successfully created (above).
-rm -rf "$container"
+rm -rf --one-file-system "$container"

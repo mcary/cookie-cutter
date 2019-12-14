@@ -1,5 +1,5 @@
 clean_old_tmp_containers () {
-  rm -rf /var/cookie-cutter/containers/tmp.*
+  rm -rf --one-file-system /var/cookie-cutter/containers/tmp.*
 }
 
 expect_no_tmp_containers () {

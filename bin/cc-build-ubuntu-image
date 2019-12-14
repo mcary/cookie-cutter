@@ -20,7 +20,7 @@ my_dir="`dirname $0`"
 trap "
   echo Cleaning up... >&2
   '$my_dir'/cc-umount 'build.$$'
-  rm -rf '$build_dir' '$image_base.$$'
+  rm -rf --one-file-system '$build_dir' '$image_base.$$'
 " INT TERM HUP EXIT
 
 "$my_dir"/cc-create "build.$$" "$parent_image_name"
