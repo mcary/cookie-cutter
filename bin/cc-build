@@ -25,7 +25,7 @@ while [ -n "$1" ]; do
       debug=true
       shift
       ;;
-    "-*")
+    "-"*)
       echo "Unknown flag: $1" >&2
       exit 1
       ;;
