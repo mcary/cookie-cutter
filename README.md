@@ -82,6 +82,9 @@ the container with `machinectl`.  You can get a login prompt with
 can get a root shell with `machinectl shell <name>`.  Use `systemd-cgtop`
 to see resource usage by booted container.
 
+The `cc-boot` command supports a `-v` (`--volume`) flag to bind-mount host
+filesystems into the container.
+
 On Ubuntu, `systemd-nspawn` is installed via the `systemd-container`
 package on the host.  The `systemd` package must be installed _inside_ the
 container as well, for example using `cc-build`'s RUN command.

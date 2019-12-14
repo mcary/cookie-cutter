@@ -48,17 +48,26 @@ container_dir="/var/cookie-cutter/containers/my-container"
 cc-umount "my-container" || return
 rm -rf "$container_dir" || return
 rm -f tmp.out tmp.err
+[ -d some-directory ] || mkdir some-directory
 
 # Also check extra flags to nspawn like "-M" in the same test
 # because these cases are so expensive.
-setsid cc-boot my-container xenial -M 'machine-name' > tmp.out 2> tmp.err &
+setsid cc-boot \
+  -v `pwd`/some-directory:/inside-directory \
+  my-container xenial \
+  -M 'machine-name' > tmp.out 2> tmp.err &
 grep Ubuntu tmp.out
-wait_for_boot_and_shutdown $! \
-  "expect_success 'machinectl status machine-name > /dev/null'"
+wait_for_boot_and_shutdown $! '
+  expect_success "machinectl status machine-name > /dev/null"
+  expect_success "mount |
+    grep -q \" on $container_dir/filesystem/inside-directory\""
+'
 
 expect_dir_exists "$container_dir"
+expect_dir_not_mounted "$container_dir/filesystem/inside-directory"
 expect_dir_not_mounted "$container_dir/filesystem"
 
+rmdir some-directory
 # Avoid file truncation error by renaming the old tmp.out in case "tail"
 # is still following it
 ( mv tmp.out tmp.out.$$.tail.old)

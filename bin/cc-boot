@@ -4,10 +4,34 @@ set -e
 
 case "$1" in
   "--help"|"-h"|"")
-    echo "Usage: $0 {container-name|--rm} image-name" >&2
+    echo "Usage: $0 [options] {container-name|--rm} image-name" >&2
+    echo "  -v|--volume host-path:container-path" >&2
+    echo "      Bind-mount host-path on the host VM as container-path" >&2
+    echo "      within the guest container." >&2
     exit 1
     ;;
 esac
+
+volumes=""
+
+while [ -n "$1" ]; do
+  case "$1" in
+    "--volume"|"-v")
+      volumes="$(echo "$volumes"; echo "$2")"
+      shift 2
+      ;;
+    "--rm")
+      break; # end of option args
+      ;;
+    "-"*)
+      echo "Unknown flag: $1" >&2
+      exit 1
+      ;;
+    *)
+      break; # end of option args
+      ;;
+  esac
+done
 
 image_name="$2"
 image="/var/cookie-cutter/images/$image_name"
@@ -25,9 +49,35 @@ my_dir="`dirname $0`"
 
 echo "$container_name" > "$container"/filesystem/etc/debian_chroot
 
+each_mount () {
+  local cmd="$1"
+  echo "$volumes" | while read line; do
+    [ -z "$line" ] && continue # First line's always blank.
+    echo "$line" | tr ':' '\n' | {
+      read host_path
+      read container_path
+      host_container_path="$container/filesystem/$container_path"
+      eval "$cmd"
+    }
+  done
+}
+
+each_mount '
+  [ -d "$host_container_path" ] || mkdir "$host_container_path"
+  mount --bind "$host_path" "$host_container_path"
+  #mount -o remount,ro,bind "$host_path" "$host_container_path"
+'
+
+cleanup_mounts () {
+  each_mount '
+    #echo "Umounting [$container_path]"
+    umount "$host_container_path"
+  '
+}
 
 cleanup="
   #echo Cleaning up... >&2
+  cleanup_mounts
   '$my_dir'/cc-umount '$container_name'
 "
 if [ "$remove" = "1" ]; then
