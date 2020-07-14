@@ -20,10 +20,18 @@ test_description "'cc-run my-container' leaves container, unmounted"
 container_dir="/var/cookie-cutter/containers/my-container"
 cc-umount "my-container" || return
 rm -rf --one-file-system "$container_dir" || return
+#rm -f tmp.out tmp.err
+[ -d some-directory ] || mkdir some-directory
 
-expect_success "cc-run my-container xenial true"
+expect_success "cc-run \
+  -v `pwd`/some-directory:/inside-directory \
+  my-container xenial \
+  test -d /inside-directory"
 expect_dir_exists "$container_dir"
 expect_dir_not_mounted "$container_dir/filesystem"
+expect_dir_not_mounted "$container_dir/filesystem/inside-directory"
+
+rmdir some-directory
 
 test_done
 
