@@ -1,4 +1,6 @@
 clean_old_tmp_containers () {
+  mount | awk '{ print $3 }' | grep '/var/cookie-cutter/containers/tmp\.' |
+    xargs --no-run-if-empty umount
   rm -rf --one-file-system /var/cookie-cutter/containers/tmp.*
 }
 

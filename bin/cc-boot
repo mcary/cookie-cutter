@@ -12,20 +12,20 @@ case "$1" in
     ;;
 esac
 
-volumes=""
+my_dir="`dirname $0`"
+container_name="$("$my_dir"/cc-create "$@")"
 
 while [ -n "$1" ]; do
   case "$1" in
     "--volume"|"-v")
-      volumes="$(echo "$volumes"; echo "$2")"
       shift 2
       ;;
     "--rm")
       break; # end of option args
       ;;
     "-"*)
-      echo "Unknown flag: $1" >&2
-      exit 1
+      # Ignore options.
+      shift
       ;;
     *)
       break; # end of option args
@@ -35,18 +35,12 @@ done
 
 image_name="$2"
 image="/var/cookie-cutter/images/$image_name"
-container_name="$1"
-if [ "x$container_name" = "x--rm" ]; then
-  container_name="tmp.$$"
+if [ "x$1" = "x--rm" ]; then
   remove=1
 fi
 container="/var/cookie-cutter/containers/$container_name"
 shift 2
-
-
-my_dir="`dirname $0`"
-"$my_dir"/cc-create "$container_name" "$image_name"
-
+volumes="$(cat "$container/volumes")"
 echo "$container_name" > "$container"/filesystem/etc/debian_chroot
 
 each_mount () {
@@ -62,15 +56,9 @@ each_mount () {
   done
 }
 
-each_mount '
-  [ -d "$host_container_path" ] || mkdir "$host_container_path"
-  mount --bind "$host_path" "$host_container_path"
-  #mount -o remount,ro,bind "$host_path" "$host_container_path"
-'
-
 cleanup_mounts () {
   each_mount '
-    #echo "Umounting [$container_path]"
+    #echo "Umounting [$container_path]" >&2
     umount "$host_container_path"
   '
 }

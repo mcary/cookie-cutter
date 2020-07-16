@@ -4,22 +4,80 @@ set -e
 
 case "$1" in
   "--help"|"-h"|"")
-    echo "Usage: $0 container-name image-name" >&2
+    echo "Usage: $0 [options] container-name image-name" >&2
     exit 1
     ;;
 esac
 
-image_name="$2"
-container_name="$1"
-container="/var/cookie-cutter/containers/$container_name"
+volumes=""
 
-trap "
+while [ -n "$1" ]; do
+  case "$1" in
+    "--volume"|"-v")
+      volumes="$(echo "$volumes"; echo "$2")"
+      shift 2
+      ;;
+    "--rm")
+      break; # end of option args
+      ;;
+    "-"*)
+      echo "Unknown flag: $1" >&2
+      exit 1
+      ;;
+    *)
+      break; # end of option args
+      ;;
+  esac
+done
+
+image_name="$2"
+image="/var/cookie-cutter/images/$image_name"
+container_name="$1"
+if [ "x$container_name" = "x--rm" ]; then
+  container_name="tmp.$$"
+  remove=1
+fi
+container="/var/cookie-cutter/containers/$container_name"
+shift 2
+
+each_mount () {
+  local cmd="$1"
+  echo "$volumes" | while read line; do
+    [ -z "$line" ] && continue # First line's always blank.
+    echo "$line" | tr ':' '\n' | {
+      read host_path
+      read container_path
+      host_container_path="$container/filesystem/$container_path"
+      eval "$cmd"
+    }
+  done
+}
+
+cleanup_mounts () {
+  each_mount '
+    #echo "Umounting [$container_path]"
+    umount "$host_container_path"
+  '
+}
+
+my_dir="`dirname $0`"
+cleanup="
+  #echo Cleaning up... >&2
+  cleanup_mounts
+  '$my_dir'/cc-umount '$container_name'
   rm -rf --one-file-system '$container'
-" INT TERM HUP EXIT
+"
+trap "$cleanup" INT TERM HUP EXIT
 
 mkdir "$container" "$container/diff" "$container/filesystem" "$container/work"
 echo "$image_name" > "$container/from"
+echo "$volumes" > "$container/volumes"
 
-my_dir="`dirname $0`"
 "$my_dir"/cc-mount "$container_name" &&
-  trap - INT TERM HUP EXIT
+  each_mount '
+    [ -d "$host_container_path" ] || mkdir "$host_container_path"
+    mount --bind "$host_path" "$host_container_path"
+    #mount -o remount,ro,bind "$host_path" "$host_container_path"
+  ' &&
+  trap - INT TERM HUP EXIT &&
+  echo "$container_name"
