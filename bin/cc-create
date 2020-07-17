@@ -40,19 +40,6 @@ fi
 container="/var/cookie-cutter/containers/$container_name"
 shift 2
 
-each_mount () {
-  local cmd="$1"
-  echo "$volumes" | while read line; do
-    [ -z "$line" ] && continue # First line's always blank.
-    echo "$line" | tr ':' '\n' | {
-      read host_path
-      read container_path
-      host_container_path="$container/filesystem/$container_path"
-      eval "$cmd"
-    }
-  done
-}
-
 my_dir="`dirname $0`"
 cleanup="
   #echo Cleaning up... >&2
@@ -66,10 +53,9 @@ echo "$image_name" > "$container/from"
 echo "$volumes" > "$container/volumes"
 
 "$my_dir"/cc-mount "$container_name" &&
-  each_mount '
+  "$my_dir"/cc-each-volume "$container_name" '
     [ -d "$host_container_path" ] || mkdir "$host_container_path"
     mount --bind "$host_path" "$host_container_path"
-    #mount -o remount,ro,bind "$host_path" "$host_container_path"
   ' &&
   trap - INT TERM HUP EXIT &&
   echo "$container_name"
