@@ -11,8 +11,40 @@ esac
 
 container_name="$1"
 container="/var/cookie-cutter/containers/$container_name"
+volumes="$(test -f "$container/volumes" && cat "$container/volumes" || true)"
 
-if cut -f2 -d' ' < /proc/mounts |
-    grep -xq --fixed-strings "$container/filesystem"; then
-  umount "$container/filesystem" # only if mounted!
-fi
+each_mount () {
+  local cmd="$1"
+  echo "$volumes" | while read line; do
+    [ -z "$line" ] && continue # First line's always blank.
+    echo "$line" | tr ':' '\n' | {
+      read host_path
+      read container_path
+      host_container_path="$container/filesystem$container_path"
+      eval "$cmd"
+    }
+  done
+}
+
+is_mounted () {
+  local path="$1"
+  cut -f2 -d' ' < /proc/mounts |
+      grep -xq --fixed-strings "$path"
+}
+
+unmount_if_mounted () {
+  local path="$1"
+  if is_mounted "$path"; then
+    umount "$path"
+  fi
+}
+
+cleanup_mounts () {
+  each_mount '
+    #echo "Umounting [$container_path]" >&2
+    unmount_if_mounted "$host_container_path"
+  '
+}
+
+cleanup_mounts
+unmount_if_mounted "$container/filesystem"

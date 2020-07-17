@@ -40,32 +40,10 @@ if [ "x$1" = "x--rm" ]; then
 fi
 container="/var/cookie-cutter/containers/$container_name"
 shift 2
-volumes="$(cat "$container/volumes")"
 echo "$container_name" > "$container"/filesystem/etc/debian_chroot
-
-each_mount () {
-  local cmd="$1"
-  echo "$volumes" | while read line; do
-    [ -z "$line" ] && continue # First line's always blank.
-    echo "$line" | tr ':' '\n' | {
-      read host_path
-      read container_path
-      host_container_path="$container/filesystem/$container_path"
-      eval "$cmd"
-    }
-  done
-}
-
-cleanup_mounts () {
-  each_mount '
-    #echo "Umounting [$container_path]" >&2
-    umount "$host_container_path"
-  '
-}
 
 cleanup="
   #echo Cleaning up... >&2
-  cleanup_mounts
   '$my_dir'/cc-umount '$container_name'
 "
 if [ "$remove" = "1" ]; then

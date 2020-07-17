@@ -53,17 +53,9 @@ each_mount () {
   done
 }
 
-cleanup_mounts () {
-  each_mount '
-    #echo "Umounting [$container_path]"
-    umount "$host_container_path"
-  '
-}
-
 my_dir="`dirname $0`"
 cleanup="
   #echo Cleaning up... >&2
-  cleanup_mounts
   '$my_dir'/cc-umount '$container_name'
   rm -rf --one-file-system '$container'
 "
