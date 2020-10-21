@@ -38,6 +38,36 @@ rmdir some-directory
 test_done
 
 
+test_description "'cc-run my-container' unmounts after slow-exiting process"
+
+container_dir="/var/cookie-cutter/containers/my-container"
+cc-umount "my-container" || return
+rm -rf --one-file-system "$container_dir" || return
+
+# We must setsid because if we rely on killing the parent only,
+# it seems to have signals blocked (a shell thing?) and the trap
+# in cc-run is not invoked nor is the "sleep" call interruped.
+# Anyway, most shells and init service managers will create a new
+# process group and kill all the processes anyway, so this is probably
+# acceptible behavior (and it seemed to happen this way before adding
+# enhanced fuser cleanup...).
+setsid -w cc-run \
+  my-container xenial \
+  sh -c 'sleep 300' > tmp.out &
+container_pid="$!"
+
+sleep 0.1
+ps -A --forest -o pid,pgid,start,args > ps.out
+expect_dir_exists "$container_dir"
+kill -TERM -"$container_pid"
+sleep 0.5
+expect_path_not_mounted "$container_dir/filesystem"
+echo "Waiting for container..."
+wait $container_pid
+
+test_done
+
+
 test_description "'cc-run my-container' mounts a file"
 
 container_dir="/var/cookie-cutter/containers/my-container"
