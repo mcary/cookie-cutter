@@ -105,6 +105,8 @@ while read cmd arg1 arg2 rest <&3; do
       ;;
     *)
       echo "Unknown command: '$cmd'" >&2
+      exit 1
+      ;;
   esac
 done 3< "$spec"
 

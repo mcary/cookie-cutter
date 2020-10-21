@@ -72,6 +72,22 @@ expect_equal "$(cat tmp.err)" "Image not found: non-existent-image" "error"
 test_done
 
 
+test_description "Raises error for invalid command"
+
+setup
+attempt_build_with_file <<-EOF
+FROM xenial
+INVALID_COMMAND
+EOF
+
+expect_cleanup_happened
+expect_failure "test -d '$new_image'"
+
+expect_equal "$(cat tmp.err)" "Unknown command: 'INVALID_COMMAND'" "error"
+
+test_done
+
+
 test_description "COPY adds file"
 
 setup
