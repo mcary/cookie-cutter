@@ -54,7 +54,14 @@ echo "$volumes" > "$container/volumes"
 
 "$my_dir"/cc-mount "$container_name" &&
   "$my_dir"/cc-each-volume "$container_name" '
-    [ -d "$host_container_path" ] || mkdir "$host_container_path"
+    if [ -d "$host_path" ]; then
+      [ -d "$host_container_path" ] || mkdir "$host_container_path"
+    elif [ -f "$host_path" ]; then
+      [ -f "$host_container_path" ] || touch "$host_container_path"
+    else
+      echo "No such volume to mount: '$host_path'" >&2
+      exit 1
+    fi
     mount --bind "$host_path" "$host_container_path"
   ' &&
   trap - INT TERM HUP EXIT &&

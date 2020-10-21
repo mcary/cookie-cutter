@@ -1,7 +1,7 @@
-expect_dir_not_mounted () {
+expect_path_not_mounted () {
   local dir="$1"
   if mount | cut -d" " -f2-3 | grep -qx "on $dir"; then
-    fail_check "Directory is a mount point: $dir"
+    fail_check "Path is a mount point: $dir"
   else
     pass_check
   fi
@@ -30,10 +30,32 @@ expect_success "cc-run \
   my-container xenial \
   test -d /inside-directory"
 expect_dir_exists "$container_dir"
-expect_dir_not_mounted "$container_dir/filesystem"
-expect_dir_not_mounted "$container_dir/filesystem/inside-directory"
+expect_path_not_mounted "$container_dir/filesystem"
+expect_path_not_mounted "$container_dir/filesystem/inside-directory"
 
 rmdir some-directory
+
+test_done
+
+
+test_description "'cc-run my-container' mounts a file"
+
+container_dir="/var/cookie-cutter/containers/my-container"
+mount | grep -q "$container_dir/filesystem/inside-file" &&
+  umount "$container_dir/filesystem/inside-file"
+cc-umount "my-container" || return
+rm -rf --one-file-system "$container_dir" || return
+#rm -f tmp.out tmp.err
+[ -d some-file ] || echo whoa > some-file
+
+expect_equal "$(cc-run \
+  -v `pwd`/some-file:/inside-file \
+  my-container xenial \
+  cat /inside-file)" "whoa" "contents of /inside-file"
+expect_path_not_mounted "$container_dir/filesystem"
+expect_path_not_mounted "$container_dir/filesystem/inside-file"
+
+rm some-file
 
 test_done
 
