@@ -2,34 +2,27 @@
 
 set -e
 
+mirror="http://archive.ubuntu.com/ubuntu"
 case "$1" in
   "--help"|"-h"|"")
-    echo "Usage: $0 version_name" >&2
+    echo "Usage: $0 [--mirror $mirror] version_name" >&2
     exit 1
+    ;;
+  "--mirror")
+    mirror="$2"
+    shift 2
     ;;
 esac
 
 version_name="$1"
-build_name="build.$$"
-build_dir="/var/cookie-cutter/containers/$build_name"
 image_base="/var/cookie-cutter/images/$version_name"
-parent_image_name="empty"
 
 my_dir="`dirname $0`"
-# Warning: this seems to run twice on interrupt, once for INT and once
-# for EXIT.  So ensure these are idempotent.
-trap "
-  echo Cleaning up... >&2
-  '$my_dir'/cc-umount '$build_name'
-  rm -rf --one-file-system '$build_dir'
-" INT TERM HUP EXIT
 
-"$my_dir"/cc-create "build_name" "$parent_image_name"
+# This image shouldn't change over time, so can generally be cached.
+if ! [ -d "$image_base-bootstrap" ]; then
+  "$my_dir"/cc-bootstrap-ubuntu-image "$mirror" "$version_name"
+fi
 
-debootstrap --variant=buildd --arch i386 \
-  "$version_name" "$build_dir/filesystem" \
-  http://us.archive.ubuntu.com/ubuntu/
-
-echo "$version_name" > "$build_dir/filesystem"/etc/debian_chroot
-
-"$my_dir"/cc-save "$build_name" "$version_name"
+"$my_dir"/cc-add-ubuntu-sources "$version_name-bootstrap" \
+  "$mirror" "$version_name"

@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  "--help"|"-h"|"")
+    echo "Usage: $0 mirror version_name" >&2
+    echo "Builds a minimally bootstrapped image without security patching." >&2
+    exit 1
+    ;;
+esac
+
+mirror="$1"
+version_name="$2"
+build_name="build.$$"
+build_dir="/var/cookie-cutter/containers/$build_name"
+image_base="/var/cookie-cutter/images/$version_name"
+parent_image_name="empty"
+
+my_dir="`dirname $0`"
+# Warning: this seems to run twice on interrupt, once for INT and once
+# for EXIT.  So ensure these are idempotent.
+trap "
+  echo Cleaning up... >&2
+  '$my_dir'/cc-umount '$build_name'
+  rm -rf --one-file-system '$build_dir'
+" INT TERM HUP EXIT
+
+"$my_dir"/cc-create "$build_name" "$parent_image_name"
+
+debootstrap --variant=buildd --arch i386 \
+  "$version_name" "$build_dir/filesystem" \
+  "$mirror"
+
+echo "$version_name" > "$build_dir/filesystem"/etc/debian_chroot
+
+"$my_dir"/cc-save "$build_name" "$version_name-bootstrap"

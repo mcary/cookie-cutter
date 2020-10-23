@@ -1,0 +1,66 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  "--help"|"-h"|"")
+    echo "Usage: $0 base_image mirror version_name" >&2
+    echo "Configures security patches and updates for components:" >&2
+    echo "  main,universe,restricted,multiverse" >&2
+    exit 1
+    ;;
+esac
+
+base_image="$1"
+mirror="$2"
+version_name="$3"
+
+security="http://security.ubuntu.com/ubuntu"
+spec="/tmp/$(basename $0)-$version_name-$$.ccspec"
+trap "rm -f '$spec'" INT TERM HUP EXIT
+cat > "$spec" <<EOF
+FROM $base_image
+
+RUN printf '\
+deb $mirror $version_name universe\\\n\
+deb $mirror $version_name-updates universe\\\n\
+deb $security $version_name-security universe\\\n'\
+  > /etc/apt/sources.list.d/cc-ubuntu-universe.list
+
+RUN printf '\
+deb $mirror $version_name multiverse\\\n\
+deb $mirror $version_name-updates multiverse\\\n\
+deb $security $version_name-security multiverse\\\n'\
+  > /etc/apt/sources.list.d/cc-ubuntu-multiverse.list
+
+RUN printf '\
+deb $mirror $version_name restricted\\\n\
+deb $mirror $version_name-updates restricted\\\n\
+deb $security $version_name-security restricted\\\n'\
+  > /etc/apt/sources.list.d/cc-ubuntu-restricted.list
+
+RUN printf '\
+deb $mirror $version_name main\\\n\
+deb $mirror $version_name-updates main\\\n\
+deb $security $version_name-security main\\\n'\
+  > /etc/apt/sources.list.d/cc-ubuntu-main.list
+
+# Avoid duplicate source warnings for "main" component, the only one listed
+# in /etc/apt/sources.list.
+RUN rm /etc/apt/sources.list
+
+# Should this run apt-get update first?  Usually we'll be running
+# cc-bootstrap-ubuntu-image first, so package indexes will be current.
+# But maybe not always.
+RUN apt-get update -yq && \
+  DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -yq
+
+# Remove downloaded .deb and .bin files (184MB in /var/cache/apt) but not
+# package indexes (127 MB in /var/lib/apt) to keep images small without
+# slowing down subsequent apt-get updates if indexes are still current.
+# That's out of 495MB total changes from the dist-upgrade.  (For bionic.)
+RUN apt-get clean
+EOF
+
+my_dir="`dirname $0`"
+"$my_dir"/cc-build "$version_name" "$spec" /dev/null
