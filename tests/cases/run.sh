@@ -53,7 +53,7 @@ rm -rf --one-file-system "$container_dir" || return
 # enhanced fuser cleanup...).
 setsid -w cc-run \
   my-container xenial \
-  sh -c 'sleep 300' > tmp.out &
+  sh -c 'sleep 300' > tmp.out 2>&1 &
 container_pid="$!"
 
 sleep 0.1
@@ -62,8 +62,30 @@ expect_dir_exists "$container_dir"
 kill -TERM -"$container_pid"
 sleep 0.5
 expect_path_not_mounted "$container_dir/filesystem"
-echo "Waiting for container..."
+echo
+echo "  Waiting for container..."
 wait $container_pid
+
+test_done
+
+
+test_description "'cc-run my-container' unmounts after forked child"
+
+container_dir="/var/cookie-cutter/containers/my-container"
+cc-umount "my-container" || return
+rm -rf --one-file-system "$container_dir" || return
+
+cc-run \
+  my-container xenial \
+  sh -c '{ trap "echo ignoring TERM; sleep 0.5" TERM; sleep 0.1; } &' \
+  > tmp.out 2>&1
+
+expect_success "grep -q 'Sent SIGTERM.  Waiting for processes to stop' tmp.out"
+expect_success "grep -q 'ignoring TERM' tmp.out"
+expect_success "grep -qF '...' tmp.out" # about 1 dot per 0.1s: at _least_ 3
+
+expect_dir_exists "$container_dir"
+expect_path_not_mounted "$container_dir/filesystem"
 
 test_done
 
