@@ -22,9 +22,20 @@ lib='
 
   unmount_if_mounted () {
     local path="$1"
+    #echo "unmount_if_mounted [$path]" >&2
     if is_mounted "$path"; then
       umount "$path"
     fi
+  }
+
+  clean_path () {
+    local path="$1"
+    # remove dup slashes
+    path="$(echo "$path" | sed "s,//*,/,g")"
+    # remove non-root trailing slash
+    path="$(echo "$path" | sed "s,\(..*\)/$,\1,")"
+    # This does not normalize /./ or foo/.. yet.
+    echo "$path"
   }
 '
 eval "$lib"
@@ -33,7 +44,7 @@ cleanup_mounts () {
   "$my_dir"/cc-each-volume "$container_name" '
     '"$lib"'
     #echo "Umounting [$container_path]" >&2
-    unmount_if_mounted "$host_container_path"
+    unmount_if_mounted "$(clean_path "$host_container_path")"
   '
 }
 
