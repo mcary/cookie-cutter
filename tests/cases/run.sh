@@ -90,6 +90,31 @@ expect_path_not_mounted "$container_dir/filesystem"
 test_done
 
 
+test_description "'cc-run my-container' unmounts after mounting /proc"
+
+container_dir="/var/cookie-cutter/containers/my-container"
+cc-umount "my-container" || return
+rm -rf --one-file-system "$container_dir" || return
+
+cc-run \
+  my-container xenial \
+  sh -c 'mount -t proc proc /proc' \
+  > tmp.out 2>&1
+
+expect_failure "grep -q 'umount: /var/cookie-cutter/containers/my-container/filesystem: target is busy' tmp.out"
+
+expect_dir_exists "$container_dir"
+expect_path_not_mounted "$container_dir/filesystem"
+
+# Cleanup in the case of test failure, and don't fuss if it's already clean.
+{
+  umount "$container_dir/filesystem/proc" || [ $? = 32 ]
+  umount "$container_dir/filesystem" || [ $? = 32 ]
+} 2>&1 | grep -vE 'mountpoint not found|not mounted'
+
+test_done
+
+
 test_description "'cc-run my-container' mounts a file"
 
 container_dir="/var/cookie-cutter/containers/my-container"
