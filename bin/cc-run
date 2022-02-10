@@ -4,7 +4,15 @@ set -e
 
 case "$1" in
   "--help"|"-h"|"")
-    echo "Usage: $0 [options] {container-name|--rm} image-name cmd..." >&2
+    echo "Usage: $0 [options] image-name cmd..." >&2
+    echo "" >&2
+    echo "  --name container_name" >&2
+    echo "      Give the container a name to refer to with cc-exec" >&2
+    echo "      or to ensure only one such container on the system." >&2
+    echo "" >&2
+    echo "  --rm" >&2
+    echo "      Automatically remove the container on exit." >&2
+    echo "" >&2
     echo "  -v|--volume host-path:container-path" >&2
     echo "      Bind-mount host-path on the host VM as container-path" >&2
     echo "      within the guest container." >&2
