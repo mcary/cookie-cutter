@@ -38,6 +38,30 @@ rmdir some-directory
 test_done
 
 
+test_description "cc-run with name: fails and leaves prior container"
+
+container_dir="/var/cookie-cutter/containers/my-container"
+cc-umount "my-container" || return
+rm -rf --one-file-system "$container_dir" || return
+#rm -f tmp.out tmp.err
+
+expect_success "cc-run \
+  --name my-container xenial \
+  true"
+expect_dir_exists "$container_dir"
+expect_failure "cc-run \
+  --rm --name my-container xenial \
+  true 2> tmp.err"
+expect_dir_exists "$container_dir" # This used to get auto-removed.
+
+expect_success "fgrep -q \
+  \"Cannot create container 'my-container': already exists\" \
+  tmp.err"
+expect_equal "$(wc -l < tmp.err)" "1" "number of stderr lines"
+
+test_done
+
+
 test_description "cc-run with name: unmounts after slow-exiting process"
 
 container_dir="/var/cookie-cutter/containers/my-container"

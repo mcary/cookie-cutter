@@ -44,6 +44,11 @@ if [ "x$container_name" = "x" ]; then
 fi
 container="/var/cookie-cutter/containers/$container_name"
 
+if [ -d "$container" ]; then
+  echo "Cannot create container '$container_name': already exists" >&2
+  exit 1
+fi
+
 my_dir="`dirname $0`"
 cleanup="
   #echo Cleaning up... >&2
