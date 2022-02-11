@@ -42,7 +42,7 @@ expect_no_tmp_containers
 test_done
 
 
-test_description "'cc-boot my-container' leaves container, unmounted"
+test_description "cc-boot with name: leaves container, unmounted"
 
 container_dir="/var/cookie-cutter/containers/my-container"
 machinectl list | grep machine-name &&
@@ -55,10 +55,11 @@ rm -f tmp.out tmp.err
 [ -d some-directory ] || mkdir some-directory
 
 # Also check extra flags to nspawn like "-M" in the same test
-# because these cases are so expensive.
+# because these cases are so expensive.  Note that cc-boot passes
+# -M $container_name already, and this is overriding.
 setsid cc-boot \
   -v `pwd`/some-directory:/inside-directory \
-  my-container xenial \
+  --name my-container xenial \
   -M 'machine-name' > tmp.out 2> tmp.err &
 grep Ubuntu tmp.out
 wait_for_boot_and_shutdown $! '

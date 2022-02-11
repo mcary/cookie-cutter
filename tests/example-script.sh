@@ -12,4 +12,4 @@ if ! [ -d /var/cookie-cutter/images/xenial ]; then
 fi
 cc-build my-image my-app.ccspec .
 cc-run --rm my-image echo hello world
-cc-run my-container my-image bash -c "touch test-passed"
+cc-run --name my-container my-image bash -c "touch test-passed"

@@ -15,7 +15,7 @@ expect_equal "$(cat tmp.out)" "Hello World" "container output"
 test_done
 
 
-test_description "'cc-run my-container' leaves container, unmounted"
+test_description "cc-run with name: leaves container, unmounted"
 
 container_dir="/var/cookie-cutter/containers/my-container"
 mount | grep -q "$container_dir/filesystem/inside-directory" &&
@@ -27,7 +27,7 @@ rm -rf --one-file-system "$container_dir" || return
 
 expect_success "cc-run \
   -v `pwd`/some-directory:/inside-directory \
-  my-container xenial \
+  --name my-container xenial \
   test -d /inside-directory"
 expect_dir_exists "$container_dir"
 expect_path_not_mounted "$container_dir/filesystem"
@@ -38,7 +38,7 @@ rmdir some-directory
 test_done
 
 
-test_description "'cc-run my-container' unmounts after slow-exiting process"
+test_description "cc-run with name: unmounts after slow-exiting process"
 
 container_dir="/var/cookie-cutter/containers/my-container"
 cc-umount "my-container" || return
@@ -52,7 +52,7 @@ rm -rf --one-file-system "$container_dir" || return
 # acceptible behavior (and it seemed to happen this way before adding
 # enhanced fuser cleanup...).
 setsid -w cc-run \
-  my-container xenial \
+  --name my-container xenial \
   sh -c 'sleep 300' > tmp.out 2>&1 &
 container_pid="$!"
 
@@ -69,14 +69,14 @@ wait $container_pid
 test_done
 
 
-test_description "'cc-run my-container' unmounts after forked child"
+test_description "cc-run with name: unmounts after forked child"
 
 container_dir="/var/cookie-cutter/containers/my-container"
 cc-umount "my-container" || return
 rm -rf --one-file-system "$container_dir" || return
 
 cc-run \
-  my-container xenial \
+  --name my-container xenial \
   sh -c '{ trap "echo ignoring TERM; sleep 0.5" TERM; sleep 0.1; } &' \
   > tmp.out 2>&1
 
@@ -90,14 +90,14 @@ expect_path_not_mounted "$container_dir/filesystem"
 test_done
 
 
-test_description "'cc-run my-container' unmounts after mounting /proc"
+test_description "cc-run with name: unmounts after mounting /proc"
 
 container_dir="/var/cookie-cutter/containers/my-container"
 cc-umount "my-container" || return
 rm -rf --one-file-system "$container_dir" || return
 
 cc-run \
-  my-container xenial \
+  --name my-container xenial \
   sh -c 'mount -t proc proc /proc' \
   > tmp.out 2>&1
 
@@ -115,7 +115,7 @@ expect_path_not_mounted "$container_dir/filesystem"
 test_done
 
 
-test_description "'cc-run my-container' mounts a file"
+test_description "cc-run with name: mounts a file"
 
 container_dir="/var/cookie-cutter/containers/my-container"
 mount | grep -q "$container_dir/filesystem/inside-file" &&
@@ -127,7 +127,7 @@ rm -rf --one-file-system "$container_dir" || return
 
 expect_equal "$(cc-run \
   -v `pwd`/some-file:/inside-file \
-  my-container xenial \
+  --name my-container xenial \
   cat /inside-file)" "whoa" "contents of /inside-file"
 expect_path_not_mounted "$container_dir/filesystem"
 expect_path_not_mounted "$container_dir/filesystem/inside-file"

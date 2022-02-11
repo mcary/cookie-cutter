@@ -25,14 +25,16 @@ container_name="$("$my_dir"/cc-create "$@")"
 
 while [ -n "$1" ]; do
   case "$1" in
-    "--volume"|"-v")
+    "--volume"|"-v"| \
+    "--name")
       shift 2
       ;;
     "--rm")
-      break; # end of option args
+      remove=1
+      shift
       ;;
     "-"*)
-      # Ignore options.
+      # Ignore options (such as --name, used by cc-create).
       shift
       ;;
     *)
@@ -41,13 +43,11 @@ while [ -n "$1" ]; do
   esac
 done
 
-image_name="$2"
+image_name="$1"
+shift 1
 image="/var/cookie-cutter/images/$image_name"
-if [ "x$1" = "x--rm" ]; then
-  remove=1
-fi
+
 container="/var/cookie-cutter/containers/$container_name"
-shift 2
 echo "$container_name" > "$container"/filesystem/etc/debian_chroot
 
 cleanup="

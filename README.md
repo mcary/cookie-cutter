@@ -16,7 +16,7 @@ As root:
 # cc-setup
 # cc-build-ubuntu-image xenial
 # cc-build my-image my-app.ccspec build-context/
-# cc-run my-container my-image echo hello world
+# cc-run --name my-container my-image echo hello world
 # cc-run --rm my-image bash -l
 # cc-boot --rm my-image-with-dbus -M my-container
 ```
