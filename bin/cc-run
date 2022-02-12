@@ -12,6 +12,7 @@ case "$1" in
     echo "" >&2
     echo "  --rm" >&2
     echo "      Automatically remove the container on exit." >&2
+    echo "      Implied when no '--name' option is given." >&2
     echo "" >&2
     echo "  -v|--volume host-path:container-path" >&2
     echo "      Bind-mount host-path on the host VM as container-path" >&2
@@ -25,8 +26,11 @@ container_name="$("$my_dir"/cc-create "$@")"
 
 while [ -n "$1" ]; do
   case "$1" in
-    "--volume"|"-v"| \
+    "--volume"|"-v")
+      shift 2
+      ;;
     "--name")
+      named=1
       shift 2
       ;;
     "--rm")
@@ -42,6 +46,10 @@ while [ -n "$1" ]; do
       ;;
   esac
 done
+
+if [ "$named" = "" ]; then
+  remove=1
+fi
 
 image_name="$1"
 shift 1

@@ -137,6 +137,31 @@ rm some-file
 test_done
 
 
+test_description "cc-run with name: removes with '--rm'"
+
+container_dir="/var/cookie-cutter/containers/my-container"
+cc-umount "my-container" || return
+rm -rf --one-file-system "$container_dir" || return
+#rm -f tmp.out tmp.err
+
+expect_success "cc-run \
+  --rm --name my-container xenial \
+  true"
+expect_success "! test -d '$container_dir'"
+
+test_done
+
+
+test_description "cc-run without name: implies '--rm'"
+
+clean_old_tmp_containers
+
+expect_success "cc-run --rm xenial true"
+expect_no_tmp_containers
+
+test_done
+
+
 test_description "'cc-run --rm' removes container on success"
 
 clean_old_tmp_containers
