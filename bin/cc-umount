@@ -19,7 +19,12 @@ is_mounted () {
       grep -xq --fixed-strings "$path"
 }
 
-path="$container/filesystem"
-if is_mounted "$path"; then
-  umount --recursive "$path"
-fi
+unmount_if_mounted () {
+  local path="$1"
+  if is_mounted "$path"; then
+    umount --recursive "$path"
+  fi
+}
+
+unmount_if_mounted "$container/filesystem"
+unmount_if_mounted "$container/namespaces"

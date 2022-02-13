@@ -19,4 +19,29 @@ container="/var/cookie-cutter/containers/$container_name"
 shift 1
 
 default_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-chroot "$container/filesystem" env -i PATH="$default_path" "$@"
+ns="$container/namespaces"
+
+if ! [ -d "$ns" ]; then
+  # This container wasn't made with unshare, just chroot.  So enter
+  # with just chroot.  (It will also not have a $container/pid.)  These
+  # containers are faster and therefore useful to cc-build.
+  chroot "$container/filesystem" env -i PATH="$default_path" "$@"
+  exit $?
+fi
+
+unshare_pid="$(cat $container/pid)"
+pid="$(pgrep --parent $unshare_pid)"
+default_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+# For some reason, the persistent namespace bound to $ns/pid cannot be
+# reassociated with via "--pid=$ns/pid", and instead we need to provide the
+# pid and let nsenter read the namespace from that pid.  (The PID namespace
+# is described as an exception in later versions of the unshare man page.)
+nsenter \
+  --target "$pid" \
+  --pid \
+  --uts="$ns/uts" --ipc="$ns/ipc" \
+  --mount="$ns/mount" \
+  --user="$ns/user" \
+  chroot "$container/filesystem" \
+  env -i PATH="$default_path" TERM="$TERM" \
+  "$@"

@@ -31,13 +31,15 @@ COPY . /srv/my-app
 
 ## Overview
 
-While inspired by [Twelve Factor](12factor.net) and Docker, it is built
-mainly on the classic chroot technology, so by comparision, Cookie-Cutter:
+While inspired by [Twelve Factor](12factor.net) and Docker, it was built
+mainly on the classic chroot technology.  Since then, some Linux namespace
+isolation has been added.  Compared to Docker, Cookie-Cutter:
 
-* Works on 32-bit machines where small applications can run with a smaller memory footprint
+* Works on 32-bit machines where small applications can run with a smaller
+  memory footprint
 * Does not require a daemon to run in the background
 * Allows standard tools to build, manipulate, and backup filesystems
-* Provides less resource isolation for networking, users, and IPC [1]
+* Provides less resource isolation for networking and users [1]
 
 While Cookie-Cutter does provide some security benefits for applications
 (assuming they run as non-root users), the main motivation is to allow an
@@ -51,7 +53,7 @@ create running containers in a matter of seconds, and these containers can
 persist and be started and stopped as needed.
 
 [1] Note that cc-boot uses systemd-nspawn instead of chroot, which supports
-these namespace isolations (see below)
+more isolation (see below)
 
 ## Commands
 
@@ -113,7 +115,8 @@ need to install `systemd-container` or `dbus`.
 * As the chroot jail technology can be escaped by an attacker, do not rely
   on it to contain untrusted code.  For example, do not run apps of
   different clients on the same VM.  Also, chroot jails provide almost no
-  protection for applications running as root.
+  protection for applications running as root.  Pairing Cookie-Cutter with
+  the "runuser" command can improve containment.
 
 ## Developing
 

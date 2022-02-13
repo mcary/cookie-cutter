@@ -86,4 +86,44 @@ if [ "$remove" = "1" ]; then
 fi
 trap "$cleanup" INT TERM HUP EXIT
 
-"$my_dir"/cc-exec "$container_name" "$@"
+ns="$container/namespaces"
+mkdir "$ns"
+touch "$ns/pid" "$ns/mount" "$ns/user" "$ns/uts" "$ns/ipc"
+
+# The mount persistent namespace ("$ns/mount") must be mounted on
+# a mount with private substree propagation.
+# https://github.com/util-linux/util-linux/issues/289
+mount --bind "$ns" "$ns"
+mount --make-private "$ns"
+
+default_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+(
+  # We need to exec so that we can know the pid of "unshare" and record
+  # it before it starts.  We need the subshell -- using parens -- so that
+  # the outer shell can still clean up when the container exits.
+  # Since $$ expands to the outer shell's pid, we need to be more clever to
+  # get the subshell's pid.
+  read pid _rest < /proc/self/stat
+  echo $pid > "$container/pid"
+
+  # Reasoning behind "unshare" options:
+  # --pid: create a pid namespace to hide external processes in top/ps
+  # --fork: causes the child process to be visible in the new pid namespace
+  # --mount-proc: doesn't work; seems to mount at /proc _before_ chroot
+  # --user: create a user namespace
+  # --map-root-user: may want to change this for security later, but this is
+  #     close to what we accomplish with the old chroot-only approach
+  # --uts: for more isolation
+  # --ipc: for more isolation
+  # --net: someday
+  exec unshare \
+    --pid="$ns/pid" --fork \
+    --mount="$ns/mount" \
+    --user="$ns/user" --map-root-user \
+    --uts="$ns/uts" --ipc="$ns/ipc" \
+    chroot "$container/filesystem" \
+    env -i PATH="$default_path" TERM="$TERM" \
+    sh -c 'mount -t proc proc /proc && exec "$@"' -- \
+    "$@"
+)

@@ -161,6 +161,24 @@ rm some-file
 test_done
 
 
+test_description "cc-run with name: mounts isolated /proc"
+
+container_dir="/var/cookie-cutter/containers/my-container"
+cc-umount "my-container" || return
+rm -rf --one-file-system "$container_dir" || return
+#rm -f tmp.out tmp.err
+
+cc-run \
+  --name my-container xenial \
+  ps -A -o pid,user,args > tmp.out 2>&1
+expect_success "grep -q PID tmp.out" # Ensure "ps" actually ran: find a heading
+expect_equal "$(grep -v PID tmp.out | wc -l)" "1" "number of processes within"
+expect_path_not_mounted "$container_dir/filesystem"
+expect_path_not_mounted "$container_dir/filesystem/proc"
+
+test_done
+
+
 test_description "cc-run with name: removes with '--rm'"
 
 container_dir="/var/cookie-cutter/containers/my-container"
