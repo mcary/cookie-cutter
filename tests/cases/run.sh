@@ -104,9 +104,14 @@ cc-run \
   sh -c '{ trap "echo ignoring TERM; sleep 0.5" TERM; sleep 0.1; } &' \
   > tmp.out 2>&1
 
-expect_success "grep -q 'Sent SIGTERM.  Waiting for processes to stop' tmp.out"
-expect_success "grep -q 'ignoring TERM' tmp.out"
-expect_success "grep -qF '...' tmp.out" # about 1 dot per 0.1s: at _least_ 3
+# The pid namespace now in effect in cc-run means we no longer send a
+# patient TERM signal when the container's pid 1 process exits.  The kernal
+# SIGKILLs all the rest.  This nice waiting used to come from cc-run's
+# $cleanup trap and its mntuser command (using fuser).  I'd prefer to
+# continue supporting graceful shutdown, but it is not currently possible.
+#expect_success "grep -q 'Sent SIGTERM.  Waiting for processes to stop' tmp.out"
+#expect_success "grep -q 'ignoring TERM' tmp.out"
+#expect_success "grep -qF '...' tmp.out" # about 1 dot per 0.1s: at _least_ 3
 
 expect_dir_exists "$container_dir"
 expect_path_not_mounted "$container_dir/filesystem"
