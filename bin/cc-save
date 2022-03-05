@@ -13,24 +13,23 @@ image_name="$2"
 container_name="$1"
 container="/var/cookie-cutter/containers/$container_name"
 image="/var/cookie-cutter/images/$image_name"
+rand=$(tr -dc 'a-zA-Z0-9' </dev/urandom | head -c 6)
+image_id="$image_name.$(date +"%s")$rand"
+image_version="/var/cookie-cutter/images/$image_id"
 
 my_dir="`dirname $0`"
 "$my_dir"/cc-umount "$container_name"
 
-#read -n 20 out < /dev/urandom; echo "$out")
-#$(dd if=/dev/urandom bs=20 count=1| shasum -
-#layer_name="$(dd if=/dev/urandom bs=20 count=1 | shasum -
-#layer="/var/cookie-cutter/layers/
-
 trap "
-  rm -rf --one-file-system '$image.$$'
+  rm -rf --one-file-system '$image_version.$$'
 " INT TERM HUP EXIT
 
-mkdir "$image.$$"
-mv "$container/diff" "$image.$$/diff"
-mv "$container/from" "$image.$$/from"
+mkdir "$image_version.$$"
+mv "$container/diff" "$image_version.$$/diff"
+mv "$container/from" "$image_version.$$/from"
 
-rm -rf --one-file-system "$image"
-mv "$image.$$" "$image"
+rm -rf --one-file-system "$image_version" "$image"
+mv "$image_version.$$" "$image_version"
+ln -s "$image_id" "$image"
 # Leave the container until the image is successfully created (above).
 rm -rf --one-file-system "$container"

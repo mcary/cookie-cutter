@@ -27,9 +27,10 @@ perform_build_with_file () {
   local default_opts="-q"
   local opts="${2-$default_opts}"
   local redirects="> tmp.out 2> tmp.err"
+  local image_name="${3-$new_image_name}"
   cat > tmp.cc-build
   expect_success \
-    "cc-build $opts '$new_image_name' tmp.cc-build $build_context $redirects"
+    "cc-build $opts '$image_name' tmp.cc-build $build_context $redirects"
   rm -f tmp.cc-build
 }
 
@@ -258,5 +259,36 @@ expect_cleanup_happened
 expect_equal "$(cat tmp.out)" "shell is running" "shell output"
 
 rm tmp.shell
+
+test_done
+
+
+test_description "Rebuilding base image doesn't change derived image"
+
+perform_build_with_file . -q my-image <<-EOF
+FROM xenial
+RUN echo hello > /a-file
+EOF
+
+perform_build_with_file . -q my-image2 <<-EOF
+FROM my-image
+EOF
+
+expect_equal "$(cc-run --rm my-image2 cat /a-file)" "hello" "/a-file contents"
+
+# Rebulding my-image with new content does not immediately change my-image2.
+perform_build_with_file . -q my-image <<-EOF
+FROM xenial
+RUN echo hello world > /a-file
+EOF
+
+expect_equal "$(cc-run --rm my-image2 cat /a-file)" "hello" "/a-file contents"
+
+# New file content is not introduced to my-image2 till it is rebuilt.
+perform_build_with_file . -q my-image2 <<-EOF
+FROM my-image
+EOF
+
+expect_equal "$(cc-run --rm my-image2 cat /a-file)" "hello world" "/a-file contents"
 
 test_done

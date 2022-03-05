@@ -52,6 +52,9 @@ custom images from a Dockerfile-like specification.  Images can be used to
 create running containers in a matter of seconds, and these containers can
 persist and be started and stopped as needed.
 
+Like docker, the image format allows containers and images to share the
+storage of the immutable images upon which they build.
+
 [1] Note that cc-boot uses systemd-nspawn instead of chroot, which supports
 more isolation (see below)
 
