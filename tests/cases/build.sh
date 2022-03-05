@@ -52,8 +52,11 @@ FROM xenial
 EOF
 
 expect_build_complete
-expect_equal "$(ls "$new_image/diff" | grep -c '.')" "0" "file count of layer"
-expect_equal "$(cat "$new_image/from")" "xenial" "'from' image"
+expect_equal \
+  "$(ls "$new_image/current/diff" | grep -c '.')" \
+  "0" \
+  "file count of layer"
+expect_success "grep -q xenial/versions/... '$new_image/current/from'"
 
 test_done
 
@@ -101,7 +104,9 @@ COPY a-file-to-add
 EOF
 
 expect_build_complete
-expect_equal "$(cat "$new_image/diff/a-file-to-add")" "some-contents" \
+expect_equal \
+  "$(cat "$new_image/current/diff/a-file-to-add")" \
+  "some-contents" \
   "contents of a-file-to-add"
 
 test_done
@@ -120,7 +125,9 @@ COPY a-dir
 EOF
 
 expect_build_complete
-expect_equal "$(cat "$new_image/diff/a-dir/a-file-to-add")" "some-contents" \
+expect_equal \
+  "$(cat "$new_image/current/diff/a-dir/a-file-to-add")" \
+  "some-contents" \
   "contents of a-dir/a-file-to-add"
 
 test_done
@@ -139,7 +146,9 @@ COPY .
 EOF
 
 expect_build_complete
-expect_equal "$(cat "$new_image/diff/a-file-to-add")" "some-contents" \
+expect_equal \
+  "$(cat "$new_image/current/diff/a-file-to-add")" \
+  "some-contents" \
   "contents of a-file-to-add"
 
 test_done
@@ -158,7 +167,9 @@ COPY a-file-to-add a-dir/
 EOF
 
 expect_build_complete
-expect_equal "$(cat "$new_image/diff/a-dir/a-file-to-add")" "some-contents" \
+expect_equal \
+  "$(cat "$new_image/current/diff/a-dir/a-file-to-add")" \
+  "some-contents" \
   "contents of a-file-to-add"
 
 test_done
@@ -174,7 +185,7 @@ RUN touch the-command-ran
 EOF
 
 expect_build_complete
-expect_file_exists "$new_image/diff/the-command-ran"
+expect_file_exists "$new_image/current/diff/the-command-ran"
 
 test_done
 

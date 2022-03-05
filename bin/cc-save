@@ -14,22 +14,31 @@ container_name="$1"
 container="/var/cookie-cutter/containers/$container_name"
 image="/var/cookie-cutter/images/$image_name"
 rand=$(tr -dc 'a-zA-Z0-9' </dev/urandom | head -c 6)
-image_id="$image_name.$(date +"%s")$rand"
-image_version="/var/cookie-cutter/images/$image_id"
+image_version_name="$(date +"%Y-%m-%d_%H-%M-%S_%N").$rand"
+image_version="$image/versions/$image_version_name"
+image_version_tmp="$image_version.tmp"
+
+for dir in "$image" "$image/versions" "$image_version"; do
+  if ! [ -d "$dir" ]; then
+    mkdir "$dir"
+  fi
+done
 
 my_dir="`dirname $0`"
 "$my_dir"/cc-umount "$container_name"
 
 trap "
-  rm -rf --one-file-system '$image_version.$$'
+  rm -rf --one-file-system '$image_version_tmp'
 " INT TERM HUP EXIT
 
-mkdir "$image_version.$$"
-mv "$container/diff" "$image_version.$$/diff"
-mv "$container/from" "$image_version.$$/from"
+mkdir "$image_version_tmp"
+mv "$container/diff" "$image_version_tmp/diff"
+mv "$container/from" "$image_version_tmp/from"
 
-rm -rf --one-file-system "$image_version" "$image"
-mv "$image_version.$$" "$image_version"
-ln -s "$image_id" "$image"
+rm -rf --one-file-system "$image_version"
+# Clean up vestiges of the old image format.
+rm -rf --one-file-system "$image/from" "$image/diff"
+mv "$image_version_tmp" "$image_version"
+ln -nfs "versions/$image_version_name" "$image/current"
 # Leave the container until the image is successfully created (above).
 rm -rf --one-file-system "$container"

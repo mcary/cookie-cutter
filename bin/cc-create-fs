@@ -39,12 +39,12 @@ image_name="$1"
 shift 1
 image="/var/cookie-cutter/images/$image_name"
 
-# Symlinks are used to designate a current image version, and we want
-# to record what that version is, not just the name of the link.
-if [ -L "$image" ]; then
-  image_version_name="$(readlink "$image")"
+if [ -d "$image/versions" ]; then
+  # New images designate one current version among multiple immutable versions.
+  versioned_image_name="$image_name/$(readlink "$image/current")"
 else
-  image_version_name="$image_name"
+  # Old images have only the "$image" dir as a current version.
+  versioned_image_name="$image_name"
 fi
 
 if [ "x$container_name" = "x" ]; then
@@ -66,7 +66,7 @@ cleanup="
 trap "$cleanup" INT TERM HUP EXIT
 
 mkdir "$container" "$container/diff" "$container/filesystem" "$container/work"
-echo "$image_version_name" > "$container/from"
+echo "$versioned_image_name" > "$container/from"
 echo "$volumes" > "$container/volumes"
 
 "$my_dir"/cc-mount "$container_name" &&
