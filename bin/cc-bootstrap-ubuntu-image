@@ -26,7 +26,7 @@ trap "
   rm -rf --one-file-system '$build_dir'
 " INT TERM HUP EXIT
 
-"$my_dir"/cc-create "$build_name" "$parent_image_name"
+"$my_dir"/cc-create-fs "$build_name" "$parent_image_name"
 
 debootstrap --variant=buildd --arch i386 \
   "$version_name" "$build_dir/filesystem" \

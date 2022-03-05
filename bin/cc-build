@@ -85,7 +85,7 @@ while read cmd arg1 arg2 rest <&3; do
   case "$cmd" in
     FROM)
       from_name="$arg1"
-     "$my_dir"/cc-create --name "build.$$" "$from_name" > /dev/null
+     "$my_dir"/cc-create-fs --name "build.$$" "$from_name" > /dev/null
       ;;
     COPY)
       cp -r "$source/$arg1" "$build_dir/filesystem/$arg2"

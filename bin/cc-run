@@ -22,7 +22,7 @@ case "$1" in
 esac
 
 my_dir="`dirname $0`"
-container_name="$("$my_dir"/cc-create "$@")"
+container_name="$("$my_dir"/cc-create-fs "$@")"
 
 while [ -n "$1" ]; do
   case "$1" in
@@ -38,7 +38,7 @@ while [ -n "$1" ]; do
       shift
       ;;
     "-"*)
-      # Ignore options (such as --name, used by cc-create).
+      # Ignore options (such as --name, used by cc-create-fs).
       shift
       ;;
     *)
