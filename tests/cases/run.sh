@@ -15,6 +15,22 @@ expect_equal "$(cat tmp.out)" "Hello World" "container output"
 test_done
 
 
+test_description "'cc-run' supports runuser"
+
+expect_success "cc-run --rm xenial runuser -u daemon whoami > tmp.out"
+expect_equal "$(cat tmp.out)" "daemon" "container output"
+
+test_done
+
+
+test_description "'cc-run' can write to its own filesystem"
+
+expect_success "cc-run --rm xenial sh -c 'touch /a-file; ls /a-file' > tmp.out"
+expect_equal "$(cat tmp.out)" "/a-file" "container output"
+
+test_done
+
+
 test_description "cc-run with name: leaves container, unmounted"
 
 container_dir="/var/cookie-cutter/containers/my-container"

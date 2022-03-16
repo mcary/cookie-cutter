@@ -41,7 +41,6 @@ nsenter \
   --pid \
   --uts="$ns/uts" --ipc="$ns/ipc" \
   --mount="$ns/mount" \
-  --user="$ns/user" \
   chroot "$container/filesystem" \
   env -i PATH="$default_path" TERM="$TERM" \
   "$@"

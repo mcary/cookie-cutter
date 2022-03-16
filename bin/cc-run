@@ -120,10 +120,27 @@ default_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   exec unshare \
     --pid="$ns/pid" --fork \
     --mount="$ns/mount" \
-    --user="$ns/user" --map-root-user \
     --uts="$ns/uts" --ipc="$ns/ipc" \
     chroot "$container/filesystem" \
     env -i PATH="$default_path" TERM="$TERM" \
     sh -c 'mount -t proc proc /proc && exec "$@"' -- \
     "$@"
+
+# Omit user namespace for now.  With this, we cannot:
+# - Call "runuser -u nobody" in the container
+# - Install packages
+# - Read or write to root-only files on the filesystem
+#
+#    --user="$ns/user" --map-root-user \
+#
+# Revisit on 22.04, where unshare should support additional options:
+# --map-current-user/--map-user: Might make it easier to run unpriv w/o runuser
+# --(ch)root might play nicer w/ --mount-proc
+# --setgid might let us call runuser inside the container
+# Don't forget to update cc-exec to use the same namespaces.
+#
+# Ideally, I'd like to have root in the container by default, be able to
+# write to the filesystem, be able to runuser in the container or have a
+# flag to drop root, and not be able to do things that require root outside
+# the container like configure network, mount devices, etc.
 )
