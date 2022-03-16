@@ -1,0 +1,40 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  "--help"|"-h")
+    echo "Usage: $0" >&2
+    exit 1
+    ;;
+esac
+
+echo "== Containers"
+for container in /var/cookie-cutter/containers/*; do
+  if ! [ -d "$container" ]; then
+    # Glob matched nothing.
+    echo "None matching $container"
+    break
+  fi
+  printf "* "
+  du -xsm "$container"
+done
+
+echo "== Images"
+for image in /var/cookie-cutter/images/*; do
+  if ! [ -e "$image" ]; then
+    # Glob matched nothing.
+    echo "None matching $image"
+    break
+  fi
+  if [ -e "$image/versions" ]; then
+    echo "* $image versions"
+    for image_version in "$image/versions"/*; do
+      printf "  * "
+      ( cd $image && du -xsm "${image_version#"$image/"}" )
+    done
+  else
+    printf "* "
+    du -xsm "$image"
+  fi
+done

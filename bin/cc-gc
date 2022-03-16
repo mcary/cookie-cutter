@@ -1,0 +1,70 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  "--help"|"-h"|"")
+    echo "Usage: $0 image-name" >&2
+    exit 1
+    ;;
+  "--debug")
+    enable_debug=1
+    shift
+    ;;
+esac
+
+debug () {
+  if [ "$enable_debug" = "1" ]; then
+    echo "$@"
+  fi
+}
+
+image_name="$1"
+image="/var/cookie-cutter/images/$image_name"
+if ! [ -d "$image" ]; then
+  echo "$(basename $0): No such image: $image" >&2
+  exit 1
+fi
+
+if ! [ -L "$image/current" ]; then
+  # This legacy type of image doesn't support multiple immutable versions.
+  exit 0
+fi
+current="$(readlink "$image/current" | sed 's,^versions/,,')"
+
+ls "$image/versions" | while read -r version; do
+  ref_count=0
+  debug "Considering $version..."
+  for ref in "$image/versions/$version/references"/*/*; do
+    if ! [ -f "$ref" ]; then
+      # Maybe the glob matched nothing, in which case it evaluates to itself.
+      debug "  No matches for glob: $ref"
+      break
+    fi
+    debug "  Checking ${ref#"$image/versions/"}:"
+    link_count="$(stat --format="%h" "$ref")"
+    debug "    link_count: $link_count"
+    if [ "x$link_count" = "x1" ]; then
+      # The "self" counterpart was removed along with the referrer, so
+      # this reference is stale.
+      debug "    Removing as stale"
+      rm "$ref"
+    else
+      # Someone is using this $version
+      debug "    Incrementing ref_count"
+      ref_count="$(( $ref_count + 1 ))"
+    fi
+  done
+  debug "  Current version? [ x$version = x$current ]"
+  if [ "x$version" = "x$current" ]; then
+    # Never consider removing the current version of an image, as a caller
+    # of cc-run should be able to expect at least one version of an image
+    # to remain available.  Stop after cleaning stale refs.
+    debug "    Not removing current version."
+    continue
+  fi
+  if [ "x$ref_count" = "x0" ]; then
+    debug "  Removing $version !"
+    rm -rf --one-file-system "$image/versions/$version"
+  fi
+done

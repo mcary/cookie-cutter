@@ -57,6 +57,7 @@ image="/var/cookie-cutter/images/$image_name"
 
 container="/var/cookie-cutter/containers/$container_name"
 echo "$container_name" > "$container"/filesystem/etc/debian_chroot
+versioned_image="/var/cookie-cutter/images/$(cat "$container/from")"
 
 cleanup="
   #echo Cleaning up... >&2
@@ -81,6 +82,8 @@ cleanup="
 if [ "$remove" = "1" ]; then
   cleanup="
     $cleanup
+    # Tidy up refcounts to delay filling the directory.
+    rm '$versioned_image/references/containers/$container_name'
     rm -rf --one-file-system '$container'
   "
 fi

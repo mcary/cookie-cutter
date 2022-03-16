@@ -35,6 +35,19 @@ mkdir "$image_version_tmp"
 mv "$container/diff" "$image_version_tmp/diff"
 mv "$container/from" "$image_version_tmp/from"
 
+# Record that we are using an image, so that the image can efficiently detect
+# when all references are removed (as shown by the file link count decreasing
+# from 2 to 1).
+from_image="/var/cookie-cutter/images/$(cat "$image_version_tmp/from")"
+for dir in references references/images; do
+  if ! [ -d "$from_image/$dir" ]; then
+    mkdir "$from_image/$dir"
+  fi
+done
+echo "$image_version" > "$image_version_tmp/self"
+ln "$image_version_tmp/self" \
+  "$from_image/references/images/$image_name@${image_version_name}"
+
 rm -rf --one-file-system "$image_version"
 # Clean up vestiges of the old image format.
 rm -rf --one-file-system "$image/from" "$image/diff"
@@ -42,3 +55,5 @@ mv "$image_version_tmp" "$image_version"
 ln -nfs "versions/$image_version_name" "$image/current"
 # Leave the container until the image is successfully created (above).
 rm -rf --one-file-system "$container"
+
+"$my_dir"/cc-gc "$image_name"

@@ -39,6 +39,11 @@ image_name="$1"
 shift 1
 image="/var/cookie-cutter/images/$image_name"
 
+if ! [ -d "$image" ]; then
+  echo "Image not found: $image_name" >&2
+  return 1
+fi
+
 if [ -d "$image/versions" ]; then
   # New images designate one current version among multiple immutable versions.
   versioned_image_name="$image_name/$(readlink "$image/current")"
@@ -46,6 +51,7 @@ else
   # Old images have only the "$image" dir as a current version.
   versioned_image_name="$image_name"
 fi
+versioned_image="/var/cookie-cutter/images/$versioned_image_name"
 
 if [ "x$container_name" = "x" ]; then
   container_name="$image_name.$$"
@@ -68,6 +74,18 @@ trap "$cleanup" INT TERM HUP EXIT
 mkdir "$container" "$container/diff" "$container/filesystem" "$container/work"
 echo "$versioned_image_name" > "$container/from"
 echo "$volumes" > "$container/volumes"
+
+# Record that we are using an image, so that the image can efficiently detect
+# when all references are removed (as shown by the file link count decreasing
+# from 2 to 1).
+echo "$container" > "$container/self"
+for dir in references references/containers; do
+  if ! [ -d "$versioned_image/$dir" ]; then
+    mkdir "$versioned_image/$dir"
+  fi
+done
+rm -f "$versioned_image/references/containers/$container_name"
+ln "$container/self" "$versioned_image/references/containers/$container_name"
 
 "$my_dir"/cc-mount "$container_name" &&
   "$my_dir"/cc-each-volume "$container_name" '

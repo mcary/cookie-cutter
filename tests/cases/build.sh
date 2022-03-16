@@ -303,3 +303,82 @@ EOF
 expect_equal "$(cc-run --rm my-image2 cat /a-file)" "hello world" "/a-file contents"
 
 test_done
+
+
+test_description "Rebuilding leaf image removes prior version"
+
+setup
+perform_build_with_file . -q my-image <<-EOF
+FROM xenial
+EOF
+
+expect_equal "$(ls -d "$new_image"/versions/* | wc -l)" "1" \
+  "count of image versions"
+image_version_dir="$(ls -d "$new_image"/versions/*)"
+expect_success "test -d $image_version_dir"
+
+
+perform_build_with_file . -q my-image <<-EOF
+FROM xenial
+EOF
+
+expect_failure "test -d $image_version_dir"
+expect_equal "$(ls -d "$new_image"/versions/* | wc -l)" "1" \
+  "count of image versions"
+
+test_done
+
+
+test_description "Rebuilding a non-leaf image does not remove prior version"
+
+setup
+perform_build_with_file . -q my-image <<-EOF
+FROM xenial
+EOF
+
+expect_equal "$(ls -d "$new_image"/versions/* | wc -l)" "1" \
+  "count of image versions"
+image_version_dir="$(ls -d "$new_image"/versions/*)"
+expect_success "test -d $image_version_dir"
+
+perform_build_with_file . -q my-image2 <<-EOF
+FROM my-image
+EOF
+
+perform_build_with_file . -q my-image <<-EOF
+FROM xenial
+EOF
+
+expect_success "test -d $image_version_dir"
+expect_equal "$(ls -d "$new_image"/versions/* | wc -l)" "2" \
+  "count of image versions"
+
+test_done
+
+
+test_description "Rebuilding an image in-use does not remove prior version"
+
+setup
+cc-umount my-container
+rm -rf --one-file-system /var/cookie-cutter/containers/my-container
+
+perform_build_with_file . -q my-image <<-EOF
+FROM xenial
+EOF
+
+expect_equal "$(ls -d "$new_image"/versions/* | wc -l)" "1" \
+  "count of image versions"
+image_version_dir="$(ls -d "$new_image"/versions/*)"
+expect_success "test -d $image_version_dir"
+
+cc-run --name my-container my-image true
+
+perform_build_with_file . -q my-image <<-EOF
+FROM xenial
+EOF
+
+expect_success "test -d $image_version_dir"
+expect_equal "$(ls -d "$new_image"/versions/* | wc -l)" "2" \
+  "count of image versions"
+
+test_done
