@@ -20,6 +20,7 @@ while [ -n "$1" ]; do
       ;;
     "--name")
       container_name="$2"
+      named=1
       shift 2
       ;;
     "--rm")
@@ -38,6 +39,7 @@ done
 image_name="$1"
 shift 1
 image="/var/cookie-cutter/images/$image_name"
+my_dir="`dirname $0`"
 
 if ! [ -d "$image" ]; then
   echo "Image not found: $image_name" >&2
@@ -58,16 +60,30 @@ if [ "x$container_name" = "x" ]; then
 fi
 container="/var/cookie-cutter/containers/$container_name"
 
+needs_to_be_reclaimed () {
+    [ "$named" != "" ] &&
+    [ -f "$container/pid" ] && ! kill -0 "$(cat "$container/pid")" 2>/dev/null
+}
+
 if [ -d "$container" ]; then
-  echo "Cannot create container '$container_name': already exists" >&2
-  exit 1
+  # Reclaim a left-over container if named and not running.  This is
+  # needed if the system is hard-rebooted so that named containers can
+  # start.
+  if needs_to_be_reclaimed; then
+    #echo "$0: reclaiming '$container_name'" >&2
+    "$my_dir"/cc-stop "$container_name" >&2
+    "$my_dir"/cc-remove "$container_name" >&2
+  else
+    echo "Cannot create container '$container_name': already exists" >&2
+    exit 1
+  fi
 fi
 
 my_dir="`dirname $0`"
 cleanup="
-  #echo Cleaning up... >&2
+  #echo $0: Cleaning up... >&2
   '$my_dir'/cc-umount '$container_name'
-  rm -rf --one-file-system '$container'
+  '$my_dir'/cc-remove '$container_name'
 "
 trap "$cleanup" INT TERM HUP EXIT
 

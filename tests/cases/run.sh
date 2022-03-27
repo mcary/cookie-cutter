@@ -54,7 +54,34 @@ rmdir some-directory
 test_done
 
 
-test_description "cc-run with name: fails and leaves prior container"
+test_description "cc-run with name: fails and leaves prior running container"
+
+container_dir="/var/cookie-cutter/containers/my-container"
+cc-umount "my-container" || return
+rm -rf --one-file-system "$container_dir" || return
+#rm -f tmp.out tmp.err
+
+cc-run \
+  --name my-container xenial \
+  sh -c 'sleep 3' 2>/dev/null &
+sleep 0.1
+expect_file_exists "$container_dir/pid"
+expect_failure "cc-run \
+  --rm --name my-container xenial \
+  true 2> tmp.err"
+expect_dir_exists "$container_dir" # This used to get auto-removed.
+
+expect_success "fgrep -q \
+  \"Cannot create container 'my-container': already exists\" \
+  tmp.err"
+expect_equal "$(wc -l < tmp.err)" "1" "number of stderr lines"
+
+cc-stop my-container >/dev/null
+
+test_done
+
+
+test_description "cc-run with name: reclaims prior finished container"
 
 container_dir="/var/cookie-cutter/containers/my-container"
 cc-umount "my-container" || return
@@ -65,15 +92,14 @@ expect_success "cc-run \
   --name my-container xenial \
   true"
 expect_dir_exists "$container_dir"
-expect_failure "cc-run \
-  --rm --name my-container xenial \
-  true 2> tmp.err"
-expect_dir_exists "$container_dir" # This used to get auto-removed.
+expect_success "cc-run \
+  --name my-container xenial \
+  echo hello > tmp.out"
+expect_dir_exists "$container_dir"
 
-expect_success "fgrep -q \
-  \"Cannot create container 'my-container': already exists\" \
-  tmp.err"
-expect_equal "$(wc -l < tmp.err)" "1" "number of stderr lines"
+expect_success "fgrep -q hello tmp.out"
+expect_equal "$(wc -l < tmp.out)" "1" "number of stdout lines"
+expect_equal "$(cat tmp.out)" "hello" "2nd container's stdout"
 
 test_done
 

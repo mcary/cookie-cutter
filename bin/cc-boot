@@ -65,7 +65,7 @@ cleanup="
 if [ "$remove" = "1" ]; then
   cleanup="
     $cleanup
-    rm -rf --one-file-system '$container'
+    '$my_dir'/cc-remove '$container_name'
   "
 fi
 trap "$cleanup" INT TERM HUP EXIT

@@ -60,31 +60,13 @@ echo "$container_name" > "$container"/filesystem/etc/debian_chroot
 versioned_image="/var/cookie-cutter/images/$(cat "$container/from")"
 
 cleanup="
-  #echo Cleaning up... >&2
-  mntuser () { fuser --ismountpoint --mount \"\$@\" '$container/filesystem'; }
-  if ! mntuser --silent 2>&1 | grep -q 'is not a mountpoint' &&
-     mntuser --silent --kill -TERM; then
-    echo -n 'Sent SIGTERM.  Waiting for processes to stop '
-    for i in \`seq 1 100\`; do
-      echo -n .
-      mntuser --silent || { echo; break; }
-      sleep 0.1
-      if [ \$i = 100 ]; then
-        echo
-        mntuser --verbose
-        echo Sending SIGKILL.
-        mntuser --silent --kill -KILL
-      fi
-    done
-  fi
-  '$my_dir'/cc-umount '$container_name'
+  #echo $0: Cleaning up... >&2
+  '$my_dir'/cc-stop '$container_name'
 "
 if [ "$remove" = "1" ]; then
   cleanup="
     $cleanup
-    # Tidy up refcounts to delay filling the directory.
-    rm '$versioned_image/references/containers/$container_name'
-    rm -rf --one-file-system '$container'
+    '$my_dir'/cc-remove '$container_name'
   "
 fi
 trap "$cleanup" INT TERM HUP EXIT

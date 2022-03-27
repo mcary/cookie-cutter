@@ -1,0 +1,47 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+  "--help"|"-h"|"")
+    echo "Usage: $0 container-name" >&2
+    exit 1
+    ;;
+esac
+
+container_name="$1"
+container="/var/cookie-cutter/containers/$container_name"
+my_dir="`dirname $0`"
+me="$(basename $0)"
+
+mntuser () {
+  fuser --ismountpoint --mount "$@" "$container/filesystem"
+}
+
+#echo "$me: Stopping '$container_name'..."
+if ! mntuser --silent 2>&1 | grep -q 'is not a mountpoint' &&
+    mntuser --silent --kill -TERM; then
+
+  echo -n "$(basename $0): Sent SIGTERM.  Waiting for processes to stop "
+  for i in `seq 1 100`; do
+    echo -n .
+    mntuser --silent || { echo; exit 0; }
+    sleep 0.1
+  done
+
+  echo
+  mntuser --verbose
+  echo -n "$me: Sending SIGKILL "
+  mntuser --silent --kill -KILL
+  for i in `seq 1 100`; do
+    echo -n .
+    mntuser --silent || { echo; exit 0; }
+    sleep 0.1
+  done
+  echo
+  # Hard to test this case:
+  mntuser --verbose
+  echo -n "$me: Failed to stop '$container_name', giving up"
+  exit 1
+fi
+"$my_dir"/cc-umount "$container_name"
