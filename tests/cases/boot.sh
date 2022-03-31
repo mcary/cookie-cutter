@@ -78,3 +78,35 @@ rmdir some-directory
 ( mv tmp.out tmp.out.$$.tail.old)
 
 test_done
+
+
+test_description "cc-boot with name: is reclaimed"
+
+container_dir="/var/cookie-cutter/containers/my-container"
+machinectl list | grep machine-name &&
+  machinectl terminate machine-name
+mount | grep -q "$container_dir/filesystem/inside-directory" &&
+  umount "$container_dir/filesystem/inside-directory"
+cc-umount "my-container" || return
+rm -rf --one-file-system "$container_dir" || return
+rm -f tmp.out tmp.err
+
+setsid cc-boot \
+  --name my-container xenial \
+  -M machine-name > tmp.out 2> tmp.err &
+wait_for_boot_and_shutdown $!
+
+expect_dir_exists "$container_dir"
+
+( mv tmp.out tmp.out.$$.tail.old)
+
+setsid cc-boot \
+  --name my-container xenial \
+  -M machine-name > tmp.out 2> tmp.err &
+wait_for_boot_and_shutdown $! '
+  expect_success "machinectl status machine-name > /dev/null"
+'
+
+( mv tmp.out tmp.out.$$.tail.old)
+
+test_done

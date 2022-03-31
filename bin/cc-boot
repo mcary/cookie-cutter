@@ -70,5 +70,15 @@ if [ "$remove" = "1" ]; then
 fi
 trap "$cleanup" INT TERM HUP EXIT
 
-systemd-nspawn --boot --quiet \
-  --directory="$container"/filesystem -M "$container_name" "$@"
+(
+  # We need to exec so that we can know the pid of systemd-nspawn and record
+  # it before it starts.  We need the subshell -- using parens -- so that
+  # the outer shell can still clean up when the container exits.
+  # Since $$ expands to the outer shell's pid, we need to be more clever to
+  # get the subshell's pid.
+  read pid _rest < /proc/self/stat
+  echo $pid > "$container/pid"
+
+  exec systemd-nspawn --boot --quiet \
+    --directory="$container"/filesystem -M "$container_name" "$@"
+)
