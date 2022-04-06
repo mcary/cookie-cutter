@@ -19,4 +19,7 @@ if [ -d "$container/from" ]; then
   rm "$versioned_image/references/containers/$container_name"
 fi
 
+# Avoid removing the pid directory before other things because,
+# without it, the reclaim feature will be disabled.
+rm -rf --one-file-system "$container/filesystem"
 rm -rf --one-file-system "$container"
