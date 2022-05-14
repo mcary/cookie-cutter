@@ -110,4 +110,5 @@ while read cmd arg1 arg2 rest <&3; do
   esac
 done 3< "$spec"
 
+"$my_dir"/cc-stop "build.$$"
 "$my_dir"/cc-save "build.$$" "$name"
