@@ -28,7 +28,17 @@ trap "
 
 "$my_dir"/cc-create-fs --name "$build_name" "$parent_image_name"
 
-debootstrap --variant=buildd --arch i386 \
+# Ubuntu 20.04 and 22.04 don't have a duplicity package for i386, but
+# they were still able to bootstrap a working image from i386, so
+# there could be use-cases for it.  But DigitalOcean only offers
+# 64-bit droplets now, so i386 seems very hypothetical.  Although I
+# _could_ revisit the image naming scheme to support multiple arches
+# per ubuntu release, as i386 probably still uses less memory for some
+# things, for now just hard-code 64-bit.
+#
+# x86_64 didn't work, even though that was the DO `arch`, so map it to
+# amd64.
+debootstrap --variant=buildd --arch amd64 \
   "$version_name" "$build_dir/filesystem" \
   "$mirror"
 
